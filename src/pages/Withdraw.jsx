@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { getDB, saveDB, updateUserData } from '../lib/storage';
+import { useState, useEffect } from 'react';
+import { submitWithdrawal, fetchUserWithdrawals, getCurrentUser } from '../lib/storage';
 import { motion } from 'framer-motion';
 import { Wallet, Send } from 'lucide-react';
 
@@ -8,11 +8,22 @@ const Withdraw = ({ user, setUser }) => {
   const [method, setMethod] = useState('JazzCash');
   const [accountNumber, setAccountNumber] = useState('');
   const [loading, setLoading] = useState(false);
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [fetching, setFetching] = useState(true);
 
-  const handleWithdraw = (e) => {
+  useEffect(() => {
+    const fetchHistory = async () => {
+      const data = await fetchUserWithdrawals(user.id);
+      setWithdrawals(data);
+      setFetching(false);
+    };
+    fetchHistory();
+  }, [user.id]);
+
+  const handleWithdraw = async (e) => {
     e.preventDefault();
     const withdrawAmount = parseInt(amount);
-    
+
     if (withdrawAmount > user.balance) {
       alert('Insufficient balance!');
       return;
@@ -25,34 +36,20 @@ const Withdraw = ({ user, setUser }) => {
 
     setLoading(true);
 
-    setTimeout(() => {
-      const db = getDB();
-      const newRequest = {
-        id: Date.now().toString(),
-        userId: user.id,
-        username: user.username,
-        amount: withdrawAmount,
-        method,
-        accountNumber,
-        status: 'pending',
-        timestamp: Date.now()
-      };
+    await submitWithdrawal(user.id, withdrawAmount, method, accountNumber);
 
-      db.withdrawalRequests.push(newRequest);
-      saveDB(db);
+    // Refresh user balance and withdrawal history
+    const [updatedUser, newHistory] = await Promise.all([
+      getCurrentUser(),
+      fetchUserWithdrawals(user.id)
+    ]);
 
-      // Deduct from user balance
-      const updatedUser = updateUserData(user.id, {
-        balance: user.balance - withdrawAmount,
-        withdrawals: [...user.withdrawals, newRequest]
-      });
-      
-      setUser(updatedUser);
-      setLoading(false);
-      setAmount('');
-      setAccountNumber('');
-      alert('Withdrawal request submitted successfully!');
-    }, 1500);
+    setUser(updatedUser);
+    setWithdrawals(newHistory);
+    setLoading(false);
+    setAmount('');
+    setAccountNumber('');
+    alert('Withdrawal request submitted successfully!');
   };
 
   return (
@@ -77,9 +74,9 @@ const Withdraw = ({ user, setUser }) => {
           <form onSubmit={handleWithdraw} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div className="input-group">
               <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>Amount (PKR)</label>
-              <input 
+              <input
                 className="glass"
-                type="number" 
+                type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="Min. 500"
@@ -90,7 +87,7 @@ const Withdraw = ({ user, setUser }) => {
 
             <div className="input-group">
               <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>Payment Method</label>
-              <select 
+              <select
                 className="glass"
                 value={method}
                 onChange={(e) => setMethod(e.target.value)}
@@ -104,9 +101,9 @@ const Withdraw = ({ user, setUser }) => {
 
             <div className="input-group">
               <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>Account Number</label>
-              <input 
+              <input
                 className="glass"
-                type="text" 
+                type="text"
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value)}
                 placeholder="e.g. 0300 1234567"
@@ -124,16 +121,18 @@ const Withdraw = ({ user, setUser }) => {
 
       <div className="card glass" style={{ marginTop: '30px' }}>
         <h3 style={{ marginBottom: '20px' }}>Recent Withdrawals</h3>
-        {user.withdrawals.length === 0 ? (
+        {fetching ? (
+          <p style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '20px 0' }}>Loading...</p>
+        ) : withdrawals.length === 0 ? (
           <p style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '20px 0' }}>No withdrawal history found.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {[...user.withdrawals].reverse().map((w, i) => (
-              <div key={i} style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                padding: '15px', 
+            {withdrawals.map((w, i) => (
+              <div key={w.id || i} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '15px',
                 background: 'var(--surface-light)',
                 borderRadius: '12px'
               }}>
@@ -143,8 +142,8 @@ const Withdraw = ({ user, setUser }) => {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 700 }}>PKR {w.amount}</div>
-                  <div style={{ 
-                    fontSize: '0.75rem', 
+                  <div style={{
+                    fontSize: '0.75rem',
                     color: w.status === 'pending' ? '#ffc107' : w.status === 'approved' ? 'var(--accent-green)' : 'var(--accent-red)'
                   }}>
                     {w.status.toUpperCase()}

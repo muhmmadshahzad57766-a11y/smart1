@@ -1,321 +1,327 @@
-const DB_NAME = 'investment_app_db';
+import { createClient } from '@supabase/supabase-js';
 
-const INITIAL_DATA = {
-  users: [
-    {
-      id: 'admin-1',
-      username: 'admin',
-      password: 'admin',
-      role: 'admin',
-      balance: 0,
-      investedAmount: 0,
-      plan: null,
-      rewards: [],
-      withdrawals: [],
-      createdAt: Date.now() - 1000 * 60 * 60 * 24 * 30 // 30 days ago
-    }
-  ],
-  plans: [
-    { id: 'plan-1', name: 'Lite', price: 3000, dailyReward: 150 },
-    { id: 'plan-2', name: 'Pro', price: 4000, dailyReward: 250 },
-    { id: 'plan-3', name: 'Elite', price: 5000, dailyReward: 400 }
-  ],
-  withdrawalRequests: [],
-  investmentRequests: [],
-  settings: {
-    themeColor: '#4facfe',
-    theme: 'dark',
-    referralRewardPercent: 10,
-    adminWallets: {
-      easypaisa: { name: 'Admin', number: '03001234567' },
-      jazzcash: { name: 'Admin', number: '03101234567' }
-    }
-  }
-};
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const getDB = () => {
-  const data = localStorage.getItem(DB_NAME);
-  if (!data) {
-    localStorage.setItem(DB_NAME, JSON.stringify(INITIAL_DATA));
-    return INITIAL_DATA;
-  }
-  let parsed;
-  try {
-    parsed = JSON.parse(data);
-  } catch (e) {
-    parsed = null;
-  }
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  if (!parsed || typeof parsed !== 'object') {
-    localStorage.setItem(DB_NAME, JSON.stringify(INITIAL_DATA));
-    return INITIAL_DATA;
-  }
-
-  let changed = false;
-
-  // Ensure settings exist for legacy data
-  if (!parsed.settings) {
-    parsed.settings = INITIAL_DATA.settings;
-    changed = true;
-  }
-  
-  // Ensure users array exists
-  if (!Array.isArray(parsed.users)) {
-    parsed.users = INITIAL_DATA.users;
-    changed = true;
-  }
-
-  // Ensure all users have necessary fields
-  parsed.users.forEach(u => {
-    let userChanged = false;
-    if (!u.referralCode) {
-      u.referralCode = `REF-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-      userChanged = true;
-    }
-    if (u.balance === undefined || u.balance === null) { u.balance = 0; userChanged = true; }
-    if (u.investedAmount === undefined || u.investedAmount === null) { u.investedAmount = 0; userChanged = true; }
-    if (!Array.isArray(u.rewards)) { u.rewards = []; userChanged = true; }
-    if (!Array.isArray(u.withdrawals)) { u.withdrawals = []; userChanged = true; }
-    if (u.referralEarnings === undefined || u.referralEarnings === null) { u.referralEarnings = 0; userChanged = true; }
-    if (u.referralCount === undefined || u.referralCount === null) { u.referralCount = 0; userChanged = true; }
-    if (!u.createdAt) { u.createdAt = Date.now(); userChanged = true; }
-    if (!u.id) { u.id = Date.now().toString() + Math.random(); userChanged = true; }
-    
-    if (userChanged) changed = true;
-  });
-
-  // Ensure new fields exist for legacy data
-  if (!parsed.investmentRequests) { parsed.investmentRequests = []; changed = true; }
-  if (!parsed.settings.adminWallets) { 
-    parsed.settings.adminWallets = INITIAL_DATA.settings.adminWallets; 
-    changed = true; 
-  }
-
-  if (changed) {
-    localStorage.setItem(DB_NAME, JSON.stringify(parsed));
-  }
-  return parsed;
-};
-
-export const saveDB = (data) => {
-  localStorage.setItem(DB_NAME, JSON.stringify(data));
-};
-
-export const getCurrentUser = () => {
+export const getCurrentUser = async () => {
   const userId = localStorage.getItem('current_user_id');
   if (!userId) return null;
-  const db = getDB();
-  return db.users.find(u => u.id === userId);
+  const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
+  if (error || !data) return null;
+
+  // Format variables specifically for how the app expects them (camelCase vs snake_case)
+  return {
+    ...data,
+    investedAmount: data.invested_amount,
+    referralCode: data.referral_code,
+    referredBy: data.referred_by,
+    referralEarnings: data.referral_earnings,
+    referralCount: data.referral_count,
+    planId: data.current_plan_id,
+    planStartTime: data.plan_start_time
+  };
 };
 
-export const login = (username, password) => {
-  const db = getDB();
-  const user = db.users.find(u => u.username === username && u.password === password);
-  if (user) {
-    localStorage.setItem('current_user_id', user.id);
-    return user;
-  }
-  return null;
+export const login = async (username, password) => {
+  const { data, error } = await supabase.from('users').select('*').eq('username', username).eq('password', password).single();
+  if (error || !data) return null;
+  localStorage.setItem('current_user_id', data.id);
+
+  return {
+    ...data,
+    investedAmount: data.invested_amount,
+    referralCode: data.referral_code,
+    referredBy: data.referred_by,
+    referralEarnings: data.referral_earnings,
+    referralCount: data.referral_count,
+    planId: data.current_plan_id,
+    planStartTime: data.plan_start_time
+  };
 };
 
 export const logout = () => {
   localStorage.removeItem('current_user_id');
 };
 
-export const signup = (username, password) => {
-  const db = getDB();
-  if (db.users.find(u => u.username === username)) return { error: 'Username already exists' };
-  
+export const signup = async (username, password) => {
+  const { data: existing } = await supabase.from('users').select('id').eq('username', username).single();
+  if (existing) return { error: 'Username already exists' };
+
   const referralCode = `REF-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
-  const newUser = {
-    id: Date.now().toString(),
+  let referredBy = null;
+  const referrerCode = localStorage.getItem('signup_referral_code');
+  if (referrerCode) {
+    const { data: referrer } = await supabase.from('users').select('id, referral_count').eq('referral_code', referrerCode).single();
+    if (referrer) {
+      referredBy = referrer.id;
+      await supabase.from('users').update({ referral_count: referrer.referral_count + 1 }).eq('id', referrer.id);
+    }
+  }
+
+  const { data: newUser, error } = await supabase.from('users').insert([{
     username,
     password,
     role: 'user',
-    balance: 0,
-    investedAmount: 0,
-    plan: null,
-    rewards: [],
-    withdrawals: [],
-    referralCode,
-    referredBy: null,
-    referralEarnings: 0,
-    referralCount: 0,
-    createdAt: Date.now()
+    referral_code: referralCode,
+    referred_by: referredBy
+  }]).select().single();
+
+  localStorage.removeItem('signup_referral_code');
+  if (error) return { error: error.message };
+
+  localStorage.setItem('current_user_id', newUser.id);
+
+  return {
+    ...newUser,
+    investedAmount: newUser.invested_amount,
+    referralCode: newUser.referral_code,
+    referredBy: newUser.referred_by,
+    referralEarnings: newUser.referral_earnings,
+    referralCount: newUser.referral_count,
+    planId: newUser.current_plan_id,
+    planStartTime: newUser.plan_start_time
   };
-
-  // Check if referred by someone
-  const referrerCode = localStorage.getItem('signup_referral_code');
-  if (referrerCode) {
-    const referrer = db.users.find(u => u.referralCode === referrerCode);
-    if (referrer) {
-      newUser.referredBy = referrer.id;
-      referrer.referralCount = (referrer.referralCount || 0) + 1;
-    }
-  }
-  
-  db.users.push(newUser);
-  saveDB(db);
-  localStorage.removeItem('signup_referral_code'); // Clean up after use
-  return newUser;
 };
 
-export const updateUserData = (userId, updates) => {
-  const db = getDB();
-  const index = db.users.findIndex(u => u.id === userId);
-  if (index !== -1) {
-    db.users[index] = { ...db.users[index], ...updates };
-    saveDB(db);
-    return db.users[index];
-  }
-  return null;
+export const updateUserData = async (userId, updates) => {
+  const payload = { ...updates };
+  // Translate camel to snake if needed
+  if (updates.investedAmount !== undefined) { payload.invested_amount = updates.investedAmount; delete payload.investedAmount; }
+  if (updates.referralEarnings !== undefined) { payload.referral_earnings = updates.referralEarnings; delete payload.referralEarnings; }
+
+  const { data } = await supabase.from('users').update(payload).eq('id', userId).select().single();
+  if (!data) return null;
+  return {
+    ...data,
+    investedAmount: data.invested_amount,
+    referralCode: data.referral_code,
+    referredBy: data.referred_by,
+    referralEarnings: data.referral_earnings,
+    referralCount: data.referral_count,
+    planId: data.current_plan_id,
+    planStartTime: data.plan_start_time
+  };
 };
 
-export const calculateRewards = (userId) => {
-  const db = getDB();
-  const user = db.users.find(u => u.id === userId);
-  if (!user || !user.plan) return;
-
-  const now = Date.now();
-  const lastRewardTime = user.rewards.length > 0 
-    ? user.rewards[user.rewards.length - 1].timestamp 
-    : user.plan.startTime;
-
-  const msInDay = 24 * 60 * 60 * 1000;
-  const timeDiff = now - lastRewardTime;
-  
-  // For demo/simulated experience, let's treat 1 minute as "1 day" if we want real-time feel,
-  // or just actual days. Let's stick to true daily but maybe add a "simulated" button.
-  // Actually, user said "daily base pr", so I'll check days passed.
-  const daysPassed = Math.floor(timeDiff / msInDay);
-  
-  if (daysPassed > 0) {
-    const totalNewReward = daysPassed * user.plan.dailyReward;
-    user.balance += totalNewReward;
-    for (let i = 0; i < daysPassed; i++) {
-      user.rewards.push({
-        amount: user.plan.dailyReward,
-        timestamp: lastRewardTime + msInDay * (i + 1)
-      });
-    }
-    saveDB(db);
-    return user;
-  }
-  return null;
+// Getting Settings
+export const getSettings = async () => {
+  const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single();
+  if (error || !data) return { themeColor: '#4facfe', theme: 'dark', referralRewardPercent: 10, adminWallets: {} };
+  return {
+    themeColor: data.theme_color,
+    theme: data.theme,
+    referralRewardPercent: data.referral_reward_percent,
+    adminWallets: data.admin_wallets
+  };
 };
 
-export const getSettings = () => {
-  const db = getDB();
-  return db.settings;
-};
+export const updateSettings = async (newSettings) => {
+  const payload = {};
+  if (newSettings.themeColor !== undefined) payload.theme_color = newSettings.themeColor;
+  if (newSettings.theme !== undefined) payload.theme = newSettings.theme;
+  if (newSettings.referralRewardPercent !== undefined) payload.referral_reward_percent = newSettings.referralRewardPercent;
+  if (newSettings.adminWallets !== undefined) payload.admin_wallets = newSettings.adminWallets;
 
-export const updateSettings = (newSettings) => {
-  const db = getDB();
-  db.settings = { ...db.settings, ...newSettings };
-  saveDB(db);
-  return db.settings;
+  const { data } = await supabase.from('settings').update(payload).eq('id', 1).select().single();
+  return data;
 };
 
 export const getTheme = () => {
-  const db = getDB();
-  return db.settings?.theme || 'dark';
+  return localStorage.getItem('app_theme') || 'dark';
 };
 
 export const setTheme = (theme) => {
-  updateSettings({ theme });
+  localStorage.setItem('app_theme', theme);
 };
 
-export const rewardReferrer = (userId, investAmount) => {
-  const db = getDB();
-  const user = db.users.find(u => u.id === userId);
-  if (user && user.referredBy) {
-    const referrer = db.users.find(u => u.id === user.referredBy);
-    if (referrer) {
-      const reward = (investAmount * db.settings.referralRewardPercent) / 100;
-      referrer.balance += reward;
-      referrer.referralEarnings += reward;
-      saveDB(db);
-      return reward;
+// We will implement calculateRewards, plans, and withdrawals to just fetch from the database directly.
+
+export const fetchPlans = async () => {
+  const { data } = await supabase.from('plans').select('*');
+  return data?.map(p => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    dailyReward: p.daily_reward,
+    createdAt: p.created_at
+  })) || [];
+};
+
+export const addPlan = async (planData) => {
+  const { data } = await supabase.from('plans').insert([{
+    name: planData.name,
+    price: planData.price,
+    daily_reward: planData.dailyReward
+  }]).select('*');
+  // Return all plans like the old mock did
+  return await fetchPlans();
+};
+
+export const deletePlan = async (planId) => {
+  await supabase.from('plans').delete().eq('id', planId);
+  return await fetchPlans();
+};
+
+export const addInvestmentRequest = async (userId, requestData) => {
+  const { data } = await supabase.from('investment_requests').insert([{
+    user_id: userId,
+    plan_id: requestData.planId,
+    transaction_id: requestData.transactionId,
+    sender_account: requestData.senderAccount,
+    status: 'pending'
+  }]).select().single();
+  return data;
+};
+
+export const fetchInvestmentRequests = async () => {
+  const { data } = await supabase.from('investment_requests').select(`*, users(username)`);
+  return data?.map(r => ({
+    id: r.id,
+    userId: r.user_id,
+    username: r.users?.username,
+    planId: r.plan_id,
+    transactionId: r.transaction_id,
+    senderAccount: r.sender_account,
+    status: r.status,
+    timestamp: new Date(r.created_at).getTime()
+  })) || [];
+};
+
+export const handleInvestmentRequest = async (requestId, status) => {
+  const { data: request } = await supabase.from('investment_requests').update({ status }).eq('id', requestId).select().single();
+
+  if (status === 'approved' && request) {
+    const { data: plan } = await supabase.from('plans').select('*').eq('id', request.plan_id).single();
+    if (plan) {
+      // Reward referrer logic
+      const { data: user } = await supabase.from('users').select('*').eq('id', request.user_id).single();
+      let investedAm = plan.price + (user.invested_amount || 0);
+
+      if (user.referred_by) {
+        const { data: settings } = await supabase.from('settings').select('referral_reward_percent').eq('id', 1).single();
+        const rewardObj = (plan.price * (settings?.referral_reward_percent || 10)) / 100;
+        const { data: referrer } = await supabase.from('users').select('*').eq('id', user.referred_by).single();
+        await supabase.from('users').update({
+          balance: Number(referrer.balance || 0) + rewardObj,
+          referral_earnings: Number(referrer.referral_earnings || 0) + rewardObj
+        }).eq('id', referrer.id);
+      }
+
+      await supabase.from('users').update({
+        current_plan_id: plan.id,
+        plan_start_time: new Date().toISOString(),
+        invested_amount: investedAm
+      }).eq('id', request.user_id);
     }
   }
-  return 0;
+  return {};
 };
 
-// --- Plan Management ---
-export const addPlan = (planData) => {
-  const db = getDB();
-  const newPlan = {
-    id: 'plan-' + Date.now(),
-    ...planData
-  };
-  db.plans.push(newPlan);
-  saveDB(db);
-  return db.plans;
+export const submitWithdrawal = async (userId, amount, method, accountDetails) => {
+  const { data } = await supabase.from('withdrawals').insert([{
+    user_id: userId,
+    amount,
+    method,
+    account_details: accountDetails,
+    status: 'pending'
+  }]).select().single();
+
+  // Need to deduct amount from user immediately as pending
+  const { data: user } = await supabase.from('users').select('balance').eq('id', userId).single();
+  await supabase.from('users').update({ balance: Number(user.balance || 0) - amount }).eq('id', userId);
+
+  return data;
 };
 
-export const updatePlan = (planId, updates) => {
-  const db = getDB();
-  const index = db.plans.findIndex(p => p.id === planId);
-  if (index !== -1) {
-    db.plans[index] = { ...db.plans[index], ...updates };
-    saveDB(db);
-    return db.plans;
+export const fetchWithdrawals = async () => {
+  const { data } = await supabase.from('withdrawals').select(`*, users(username)`);
+  return data?.map(w => ({
+    id: w.id,
+    userId: w.user_id,
+    username: w.users?.username,
+    amount: w.amount,
+    method: w.method,
+    accountDetails: w.account_details,
+    status: w.status,
+    timestamp: new Date(w.created_at).getTime()
+  })) || [];
+};
+
+export const fetchUserWithdrawals = async (userId) => {
+  const { data } = await supabase.from('withdrawals').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+  return data?.map(w => ({
+    id: w.id,
+    amount: w.amount,
+    method: w.method,
+    accountDetails: w.account_details,
+    status: w.status,
+    timestamp: new Date(w.created_at).getTime()
+  })) || [];
+};
+
+export const handleWithdrawal = async (withdrawId, status) => {
+  const { data: w } = await supabase.from('withdrawals').update({ status }).eq('id', withdrawId).select().single();
+  if (status === 'rejected' && w) {
+    // Refund
+    const { data: user } = await supabase.from('users').select('balance').eq('id', w.user_id).single();
+    await supabase.from('users').update({ balance: Number(user.balance || 0) + w.amount }).eq('id', w.user_id);
+  }
+};
+
+export const calculateRewards = async (userId) => {
+  // Check user and plan
+  const { data: user } = await supabase.from('users').select('*').eq('id', userId).single();
+  if (!user || !user.current_plan_id) return null;
+
+  const { data: plan } = await supabase.from('plans').select('*').eq('id', user.current_plan_id).single();
+  if (!plan) return null;
+
+  // Retrieve last reward timestamp. If none, use plan_start_time
+  const { data: lastReward } = await supabase.from('rewards')
+    .select('timestamp')
+    .eq('user_id', userId)
+    .order('timestamp', { ascending: false })
+    .limit(1)
+    .single();
+
+  const lastRewardTime = lastReward ? new Date(lastReward.timestamp).getTime() : new Date(user.plan_start_time).getTime();
+  const now = Date.now();
+  const msInDay = 24 * 60 * 60 * 1000;
+
+  const daysPassed = Math.floor((now - lastRewardTime) / msInDay);
+  if (daysPassed > 0) {
+    const totalNewReward = daysPassed * Number(plan.daily_reward);
+
+    // Add rewards to table
+    const inserts = [];
+    for (let i = 0; i < daysPassed; i++) {
+      inserts.push({
+        user_id: userId,
+        amount: Number(plan.daily_reward),
+        timestamp: new Date(lastRewardTime + msInDay * (i + 1)).toISOString()
+      });
+    }
+    await supabase.from('rewards').insert(inserts);
+
+    // Update user balance
+    await supabase.from('users').update({
+      balance: Number(user.balance || 0) + totalNewReward
+    }).eq('id', userId);
+
+    return await getCurrentUser();
   }
   return null;
 };
 
-export const deletePlan = (planId) => {
-  const db = getDB();
-  db.plans = db.plans.filter(p => p.id !== planId);
-  saveDB(db);
-  return db.plans;
+export const fetchAllUsers = async () => {
+  const { data } = await supabase.from('users').select('*');
+  return data || [];
 };
 
-// --- Investment Requests ---
-export const addInvestmentRequest = (userId, requestData) => {
-  const db = getDB();
-  const user = db.users.find(u => u.id === userId);
-  if (!user) return null;
-
-  const newRequest = {
-    id: 'inv-' + Date.now(),
-    userId,
-    username: user.username,
-    status: 'pending',
-    timestamp: Date.now(),
-    ...requestData
-  };
-
-  db.investmentRequests.push(newRequest);
-  saveDB(db);
-  return newRequest;
-};
-
-export const handleInvestmentRequest = (requestId, status) => {
-  const db = getDB();
-  const requestIndex = db.investmentRequests.findIndex(r => r.id === requestId);
-  if (requestIndex === -1) return null;
-
-  const request = db.investmentRequests[requestIndex];
-  request.status = status;
-
-  if (status === 'approved') {
-    const userIndex = db.users.findIndex(u => u.id === request.userId);
-    if (userIndex !== -1) {
-      const user = db.users[userIndex];
-      const plan = db.plans.find(p => p.id === request.planId);
-      
-      if (plan) {
-        user.plan = { ...plan, startTime: Date.now() };
-        user.investedAmount = (user.investedAmount || 0) + plan.price;
-        
-        // Reward referrer
-        rewardReferrer(user.id, plan.price);
-      }
-    }
-  }
-
-  saveDB(db);
-  return db;
+export const fetchUserRewards = async (userId) => {
+  const { data } = await supabase.from('rewards').select('*').eq('user_id', userId);
+  return data || [];
 };

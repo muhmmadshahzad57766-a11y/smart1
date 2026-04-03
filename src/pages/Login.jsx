@@ -4,17 +4,17 @@ import { motion } from 'framer-motion';
 
 const Login = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
-   const [username, setUsername] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (isLogin) {
-      const user = login(username, password);
+      const user = await login(username, password);
       if (user) onLogin(user);
       else setError('Invalid credentials');
     } else {
@@ -23,36 +23,36 @@ const Login = ({ onLogin }) => {
       } else {
         localStorage.removeItem('signup_referral_code');
       }
-      const result = signup(username, password);
+      const result = await signup(username, password);
       if (result.error) setError(result.error);
       else onLogin(result);
     }
   };
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       height: 'calc(100vh - 100px)',
       padding: '20px'
     }}>
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass" 
+        className="glass"
         style={{ width: '100%', maxWidth: '400px', padding: '40px' }}
       >
         <h2 style={{ marginBottom: '30px', textAlign: 'center' }}>
           {isLogin ? 'Welcome Back' : 'Create Account'}
         </h2>
-        
+
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="input-group">
             <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>Username</label>
-            <input 
+            <input
               className="glass"
-              type="text" 
+              type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -61,9 +61,9 @@ const Login = ({ onLogin }) => {
           </div>
           <div className="input-group">
             <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>Password</label>
-            <input 
+            <input
               className="glass"
-              type="password" 
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -74,9 +74,9 @@ const Login = ({ onLogin }) => {
           {!isLogin && (
             <div className="input-group">
               <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>Referral Code (Optional)</label>
-              <input 
+              <input
                 className="glass"
-                type="text" 
+                type="text"
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value)}
                 placeholder="REF-XXXXX"
@@ -94,8 +94,8 @@ const Login = ({ onLogin }) => {
 
         <p style={{ marginTop: '20px', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
           {isLogin ? "Don't have an account?" : "Already have an account?"}
-          <span 
-            onClick={() => setIsLogin(!isLogin)} 
+          <span
+            onClick={() => setIsLogin(!isLogin)}
             style={{ color: 'var(--primary)', cursor: 'pointer', marginLeft: '5px', fontWeight: 600 }}
           >
             {isLogin ? 'Signup' : 'Login'}

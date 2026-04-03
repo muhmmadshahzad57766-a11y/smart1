@@ -9,10 +9,25 @@ import Plans from './pages/Plans';
 import Withdraw from './pages/Withdraw';
 
 function App() {
-  const [user, setUser] = useState(() => getCurrentUser());
+  const [user, setUser] = useState(null);
   const [theme, setThemeState] = useState(() => getTheme());
+  const [settings, setSettings] = useState({ themeColor: '#4facfe' });
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const initApp = async () => {
+      const [currentUser, appSettings] = await Promise.all([
+        getCurrentUser(),
+        getSettings()
+      ]);
+      setUser(currentUser);
+      setSettings(appSettings);
+      setLoading(false);
+    };
+    initApp();
+  }, []);
 
   // Apply / remove light-theme class on body whenever theme changes
   useEffect(() => {
@@ -35,8 +50,15 @@ function App() {
     navigate('/login');
   };
 
-  const settings = getSettings();
   const themeColor = settings?.themeColor || '#4facfe';
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-main)' }}>
+        <div className="gradient-text" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
@@ -73,10 +95,10 @@ function App() {
             }
           />
           <Route path="/dashboard" element={user ? <Dashboard user={user} setUser={setUser} /> : <Navigate to="/login" />} />
-          <Route path="/admin"     element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
-          <Route path="/plans"     element={user ? <Plans user={user} setUser={setUser} /> : <Navigate to="/login" />} />
-          <Route path="/withdraw"  element={user ? <Withdraw user={user} setUser={setUser} /> : <Navigate to="/login" />} />
-          <Route path="/"          element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/login'} />} />
+          <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
+          <Route path="/plans" element={user ? <Plans user={user} setUser={setUser} /> : <Navigate to="/login" />} />
+          <Route path="/withdraw" element={user ? <Withdraw user={user} setUser={setUser} /> : <Navigate to="/login" />} />
+          <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/login'} />} />
         </Routes>
       </div>
     </div>
