@@ -165,6 +165,16 @@ export const deletePlan = async (planId) => {
   return await fetchPlans();
 };
 
+export const updatePlan = async (id, updates) => {
+  const payload = {};
+  if (updates.name !== undefined) payload.name = updates.name;
+  if (updates.price !== undefined) payload.price = updates.price;
+  if (updates.dailyReward !== undefined) payload.daily_reward = updates.dailyReward;
+
+  const { data } = await supabase.from('plans').update(payload).eq('id', id).select().single();
+  return data;
+};
+
 export const addInvestmentRequest = async (userId, requestData) => {
   const { data } = await supabase.from('investment_requests').insert([{
     user_id: userId,
