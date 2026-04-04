@@ -24,7 +24,7 @@ const Landing = () => {
     ];
 
     return (
-        <div style={{ background: 'var(--bg-main)', color: 'var(--text-main)', minHeight: '100vh' }}>
+        <div style={{ background: 'var(--bg-darker)', color: 'var(--text-main)', minHeight: '100vh' }}>
             {/* Hero Section */}
             <section className="landing-hero">
                 <div className="landing-grid container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -124,8 +124,8 @@ const Landing = () => {
                                             display: 'block',
                                             textAlign: 'center',
                                             padding: '12px',
-                                            background: 'var(--text-main)',
-                                            color: 'var(--bg-main)',
+                                            background: 'var(--primary)',
+                                            color: '#000000',
                                             borderRadius: '12px',
                                             fontWeight: 700,
                                             textDecoration: 'none',
