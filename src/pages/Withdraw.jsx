@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { submitWithdrawal, fetchUserWithdrawals, getCurrentUser } from '../lib/storage';
+import { submitWithdrawal, fetchUserWithdrawals, getCurrentUser, getSettings } from '../lib/storage';
 import { motion } from 'framer-motion';
 import { Wallet, Send } from 'lucide-react';
 
@@ -10,14 +10,19 @@ const Withdraw = ({ user, setUser }) => {
   const [loading, setLoading] = useState(false);
   const [withdrawals, setWithdrawals] = useState([]);
   const [fetching, setFetching] = useState(true);
+  const [settings, setSettings] = useState({ minWithdrawal: 500 });
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      const data = await fetchUserWithdrawals(user.id);
-      setWithdrawals(data);
+    const init = async () => {
+      const [history, appSettings] = await Promise.all([
+        fetchUserWithdrawals(user.id),
+        getSettings()
+      ]);
+      setWithdrawals(history);
+      setSettings(appSettings);
       setFetching(false);
     };
-    fetchHistory();
+    init();
   }, [user.id]);
 
   const handleWithdraw = async (e) => {
@@ -29,8 +34,8 @@ const Withdraw = ({ user, setUser }) => {
       return;
     }
 
-    if (withdrawAmount < 500) {
-      alert('Minimum withdrawal is PKR 500');
+    if (withdrawAmount < (settings.minWithdrawal || 500)) {
+      alert(`Minimum withdrawal is PKR ${settings.minWithdrawal || 500}`);
       return;
     }
 
@@ -79,7 +84,7 @@ const Withdraw = ({ user, setUser }) => {
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Min. 500"
+                placeholder={`Min. ${settings.minWithdrawal || 500}`}
                 required
                 style={{ width: '100%', padding: '12px', color: 'white' }}
               />

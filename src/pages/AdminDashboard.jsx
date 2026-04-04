@@ -671,6 +671,18 @@ const AdminDashboard = () => {
                           style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'var(--text-main)' }}
                         />
                       </div>
+                      <div>
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>Minimum Withdrawal (PKR)</label>
+                        <input
+                          type="number"
+                          className="glass"
+                          value={settings.minWithdrawal || ''}
+                          onChange={(e) => {
+                            setSettings({ ...settings, minWithdrawal: parseInt(e.target.value) || 0 });
+                          }}
+                          style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'var(--text-main)' }}
+                        />
+                      </div>
                     </div>
                   </div>
 

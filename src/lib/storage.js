@@ -113,11 +113,12 @@ export const deleteUser = async (userId) => {
 // Getting Settings
 export const getSettings = async () => {
   const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single();
-  if (error || !data) return { themeColor: '#4facfe', theme: 'dark', referralRewardPercent: 10, adminWallets: {} };
+  if (error || !data) return { themeColor: '#4facfe', theme: 'dark', referralRewardPercent: 10, minWithdrawal: 500, adminWallets: {} };
   return {
     themeColor: data.theme_color,
     theme: data.theme,
     referralRewardPercent: data.referral_reward_percent,
+    minWithdrawal: data.min_withdrawal || 500,
     adminWallets: data.admin_wallets
   };
 };
@@ -127,6 +128,7 @@ export const updateSettings = async (newSettings) => {
   if (newSettings.themeColor !== undefined) payload.theme_color = newSettings.themeColor;
   if (newSettings.theme !== undefined) payload.theme = newSettings.theme;
   if (newSettings.referralRewardPercent !== undefined) payload.referral_reward_percent = newSettings.referralRewardPercent;
+  if (newSettings.minWithdrawal !== undefined) payload.min_withdrawal = newSettings.minWithdrawal;
   if (newSettings.adminWallets !== undefined) payload.admin_wallets = newSettings.adminWallets;
 
   const { data } = await supabase.from('settings').update(payload).eq('id', 1).select().single();
@@ -184,7 +186,11 @@ export const addInvestmentRequest = async (userId, requestData) => {
     user_id: userId,
     plan_id: requestData.planId,
     transaction_id: requestData.transactionId,
-    sender_account: requestData.senderAccount,
+    method: requestData.method,
+    sender_account_name: requestData.senderAccountName,
+    sender_account_no: requestData.senderAccountNo,
+    amount_sent: requestData.amountSent,
+    screenshot: requestData.screenshot,
     status: 'pending'
   }]).select().single();
   return data;
@@ -197,8 +203,13 @@ export const fetchInvestmentRequests = async () => {
     userId: r.user_id,
     username: r.users?.username,
     planId: r.plan_id,
+    planName: r.plan_name, // This might need to be stored in DB if not joining plans
     transactionId: r.transaction_id,
-    senderAccount: r.sender_account,
+    method: r.method,
+    senderAccountName: r.sender_account_name,
+    senderAccountNo: r.sender_account_no,
+    amountSent: r.amount_sent,
+    screenshot: r.screenshot,
     status: r.status,
     timestamp: new Date(r.created_at).getTime()
   })) || [];
@@ -341,7 +352,16 @@ export const calculateRewards = async (userId) => {
 
 export const fetchAllUsers = async () => {
   const { data } = await supabase.from('users').select('*');
-  return data || [];
+  return data?.map(u => ({
+    ...u,
+    investedAmount: u.invested_amount,
+    referralCode: u.referral_code,
+    referredBy: u.referred_by,
+    referralEarnings: u.referral_earnings,
+    referralCount: u.referral_count,
+    planId: u.current_plan_id,
+    createdAt: u.created_at
+  })) || [];
 };
 
 export const fetchUserRewards = async (userId) => {
