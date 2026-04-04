@@ -174,13 +174,26 @@ const Plans = ({ user, setUser }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className="glass"
-              style={{ width: '100%', maxWidth: '900px', height: '90vh', overflowY: 'auto', borderRadius: '30px', padding: '40px', border: '1px solid var(--glass-border)', position: 'relative' }}
+              style={{
+                width: '100%',
+                maxWidth: '900px',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                borderRadius: '24px',
+                padding: window.innerWidth < 768 ? '20px' : '40px',
+                border: '1px solid var(--glass-border)',
+                position: 'relative'
+              }}
             >
               <button onClick={() => setShowModal(false)} style={{ position: 'absolute', top: '30px', right: '30px', background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer' }}>
                 <X size={30} />
               </button>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '40px' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: window.innerWidth < 768 ? '1fr' : 'repeat(auto-fit, minmax(350px, 1fr))',
+                gap: window.innerWidth < 768 ? '20px' : '40px'
+              }}>
                 {/* Left: Admin Details */}
                 <div>
                   <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '10px' }}>Step 1: Payment</h2>

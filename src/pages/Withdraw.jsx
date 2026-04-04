@@ -131,31 +131,38 @@ const Withdraw = ({ user, setUser }) => {
         ) : withdrawals.length === 0 ? (
           <p style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '20px 0' }}>No withdrawal history found.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {withdrawals.map((w, i) => (
-              <div key={w.id || i} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '15px',
-                background: 'var(--surface-light)',
-                borderRadius: '12px'
-              }}>
-                <div>
-                  <div style={{ fontWeight: 600 }}>{w.method} Payout</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>{new Date(w.timestamp).toLocaleDateString()}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 700 }}>PKR {w.amount}</div>
-                  <div style={{
-                    fontSize: '0.75rem',
-                    color: w.status === 'pending' ? '#ffc107' : w.status === 'approved' ? 'var(--accent-green)' : 'var(--accent-red)'
-                  }}>
-                    {w.status.toUpperCase()}
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="table-container">
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th>Account</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {withdrawals.map(w => (
+                  <tr key={w.id}>
+                    <td>{new Date(w.timestamp).toLocaleDateString()}</td>
+                    <td style={{ fontWeight: 700 }}>PKR {w.amount}</td>
+                    <td>{w.method}</td>
+                    <td>{w.accountDetails}</td>
+                    <td>
+                      <span className={`badge ${w.status === 'pending' ? 'badge-warning' : w.status === 'approved' ? 'badge-success' : 'badge-error'}`}>
+                        {w.status.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {withdrawals.length === 0 && (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-dim)' }}>No transaction history found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

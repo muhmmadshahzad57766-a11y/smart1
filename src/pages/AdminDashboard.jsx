@@ -304,14 +304,14 @@ const AdminDashboard = () => {
       {/* Tabs Navigation */}
       <div style={{
         display: 'flex',
-        gap: '10px',
+        gap: '8px',
         marginBottom: '30px',
         padding: '6px',
         background: 'rgba(255,255,255,0.03)',
         borderRadius: '16px',
-        width: 'fit-content',
+        width: '100%',
         overflowX: 'auto',
-        maxWidth: '100%'
+        WebkitOverflowScrolling: 'touch'
       }}>
         {[
           { id: 'users', label: 'Users', icon: Users },
@@ -324,7 +324,7 @@ const AdminDashboard = () => {
             key={tab.id}
             onClick={() => { setActiveTab(tab.id); setUserPage(1); setInvestPage(1); setWithdrawPage(1); }}
             style={{
-              padding: '10px 20px',
+              padding: '10px 18px',
               borderRadius: '12px',
               border: 'none',
               background: activeTab === tab.id ? 'var(--primary)' : 'transparent',
@@ -334,11 +334,12 @@ const AdminDashboard = () => {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              transition: 'all 0.3s ease'
+              gap: '6px',
+              transition: 'all 0.3s ease',
+              fontSize: '0.9rem'
             }}
           >
-            <tab.icon size={18} /> {tab.label}
+            <tab.icon size={16} /> {tab.label}
           </button>
         ))}
       </div>
@@ -362,7 +363,7 @@ const AdminDashboard = () => {
                     style={{ padding: '12px 15px', width: '300px', fontSize: '0.9rem', color: 'var(--text-main)' }}
                   />
                 </div>
-                <div style={{ overflowX: 'auto' }}>
+                <div className="table-container">
                   <table className="custom-table">
                     <thead>
                       <tr>
@@ -428,7 +429,7 @@ const AdminDashboard = () => {
                 {(!paginatedInvestments || paginatedInvestments.length === 0) ? (
                   <p style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '50px' }}>No payment requests found.</p>
                 ) : (
-                  <div style={{ overflowX: 'auto' }}>
+                  <div className="table-container">
                     <table className="custom-table">
                       <thead>
                         <tr>
@@ -498,7 +499,7 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <div style={{ overflowX: 'auto' }}>
+                <div className="table-container">
                   <table className="custom-table">
                     <thead>
                       <tr>
@@ -745,9 +746,23 @@ const AdminDashboard = () => {
 
       {/* Screenshot Modal */}
       {viewScreenshot && (
-        <div onClick={() => setViewScreenshot(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <img src={viewScreenshot} style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '10px' }} alt="Payment Proof" />
-          <p style={{ position: 'absolute', bottom: '20px', color: 'white' }}>Click anywhere to close</p>
+        <div className="modal-overlay" onClick={() => setViewScreenshot(null)}>
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="modal-content"
+            style={{ padding: '15px' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <h3 style={{ margin: 0 }}>Payment Verification</h3>
+              <button onClick={() => setViewScreenshot(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)' }}><X size={24} /></button>
+            </div>
+            <div style={{ borderRadius: '15px', overflow: 'hidden', background: '#000', display: 'flex', justifyContent: 'center' }}>
+              <img src={viewScreenshot} style={{ maxWidth: '100%', display: 'block' }} alt="Payment Proof" />
+            </div>
+            <button className="gradient-btn" onClick={() => setViewScreenshot(null)} style={{ width: '100%', marginTop: '15px' }}>Close Preview</button>
+          </motion.div>
         </div>
       )}
     </div>
