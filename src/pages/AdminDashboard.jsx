@@ -10,7 +10,8 @@ import {
   deletePlan,
   handleInvestmentRequest,
   updateSettings,
-  handleWithdrawal
+  handleWithdrawal,
+  updateUserData
 } from '../lib/storage';
 import {
   Users,
@@ -26,9 +27,14 @@ import {
   Trash2,
   DollarSign,
   Briefcase,
-  Eye
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  Edit
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const ITEMS_PER_PAGE = 10;
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -42,6 +48,17 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewScreenshot, setViewScreenshot] = useState(null);
 
+  // Pagination states
+  const [userPage, setUserPage] = useState(1);
+  const [investPage, setInvestPage] = useState(1);
+  const [withdrawPage, setWithdrawPage] = useState(1);
+
+  // Sub-tabs for investments
+  const [investSubTab, setInvestSubTab] = useState('pending'); // 'pending' | 'approved'
+
+  // Sub-tabs for withdrawals
+  const [withdrawSubTab, setWithdrawSubTab] = useState('pending'); // 'pending' | 'approved'
+
   const refreshData = async () => {
     setLoading(true);
     try {
@@ -54,7 +71,6 @@ const AdminDashboard = () => {
         if (s) setSettings(s);
       }
 
-      // Always fetch stats basically
       const [u, w, i] = await Promise.all([
         fetchAllUsers(),
         fetchWithdrawals(),
@@ -72,6 +88,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     refreshData();
   }, [activeTab]);
+
+  // Edit User State
+  const [editUserModal, setEditUserModal] = useState(null);
 
   // New Plan State
   const [showAddPlan, setShowAddPlan] = useState(false);
@@ -93,6 +112,31 @@ const AdminDashboard = () => {
       (u.username || '').toLowerCase().includes(searchTerm.toLowerCase()) && u.role !== 'admin'
     );
   }, [users, searchTerm]);
+
+  // Pagination Selectors
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (userPage - 1) * ITEMS_PER_PAGE;
+    return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredUsers, userPage]);
+
+  const filteredInvestments = useMemo(() => {
+    return investSubTab === 'pending' ? investmentRequests.filter(i => i.status === 'pending') : investmentRequests.filter(i => i.status === 'approved' || i.status === 'rejected');
+  }, [investmentRequests, investSubTab]);
+
+  const paginatedInvestments = useMemo(() => {
+    const startIndex = (investPage - 1) * ITEMS_PER_PAGE;
+    return [...filteredInvestments].reverse().slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredInvestments, investPage]);
+
+  const filteredWithdrawals = useMemo(() => {
+    return withdrawSubTab === 'pending' ? withdrawalRequests.filter(w => w.status === 'pending') : withdrawalRequests.filter(w => w.status === 'approved' || w.status === 'rejected');
+  }, [withdrawalRequests, withdrawSubTab]);
+
+  const paginatedWithdrawals = useMemo(() => {
+    const startIndex = (withdrawPage - 1) * ITEMS_PER_PAGE;
+    return filteredWithdrawals.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredWithdrawals, withdrawPage]);
+
 
   const handleAddPlan = async () => {
     if (!newPlan.name || !newPlan.price || !newPlan.dailyReward) return;
@@ -116,6 +160,22 @@ const AdminDashboard = () => {
   const handleUpdatePlanField = async (id, field, value) => {
     await updatePlan(id, { [field]: field === 'name' ? value : parseInt(value) });
     refreshData();
+  };
+
+  const handleUpdateUser = async () => {
+    if (!editUserModal) return;
+    try {
+      await updateUserData(editUserModal.id, {
+        balance: editUserModal.balance,
+        investedAmount: editUserModal.investedAmount,
+        ...(editUserModal.password ? { password: editUserModal.password } : {})
+      });
+      alert('User updated successfully');
+      setEditUserModal(null);
+      refreshData();
+    } catch (e) {
+      alert('Error updating user');
+    }
   };
 
   const processInvestment = async (id, status) => {
@@ -147,6 +207,32 @@ const AdminDashboard = () => {
     } catch (e) {
       return 'Invalid Date';
     }
+  };
+
+  const Pagination = ({ currentPage, totalItems, onPageChange }) => {
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+    if (totalPages <= 1) return null;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="glass"
+          style={{ padding: '8px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>Page {currentPage} of {totalPages}</span>
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="glass"
+          style={{ padding: '8px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -223,7 +309,7 @@ const AdminDashboard = () => {
         ].map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => { setActiveTab(tab.id); setUserPage(1); setInvestPage(1); setWithdrawPage(1); }}
             style={{
               padding: '10px 20px',
               borderRadius: '12px',
@@ -260,7 +346,7 @@ const AdminDashboard = () => {
                     className="glass"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ padding: '12px 15px', width: '300px', fontSize: '0.9rem', color: 'white' }}
+                    style={{ padding: '12px 15px', width: '300px', fontSize: '0.9rem', color: 'var(--text-main)' }}
                   />
                 </div>
                 <div style={{ overflowX: 'auto' }}>
@@ -276,7 +362,7 @@ const AdminDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredUsers.map(u => (
+                      {paginatedUsers.map(u => (
                         <tr key={u.id}>
                           <td>{u.username}</td>
                           <td>{u.planId ? <span className="badge badge-info">{u.planId}</span> : 'None'}</td>
@@ -284,20 +370,40 @@ const AdminDashboard = () => {
                           <td>PKR {(Number(u.investedAmount) || 0).toLocaleString()}</td>
                           <td>{formatDate(u.createdAt)}</td>
                           <td style={{ textAlign: 'right' }}>
-                            <button className="glass" style={{ padding: '8px', color: 'var(--text-dim)' }}><Eye size={16} /></button>
+                            <button
+                              onClick={() => setEditUserModal({
+                                id: u.id,
+                                username: u.username,
+                                balance: Number(u.balance) || 0,
+                                investedAmount: Number(u.investedAmount) || 0,
+                                password: ''
+                              })}
+                              className="glass"
+                              style={{ padding: '8px', color: 'var(--text-dim)' }}
+                            >
+                              <Edit size={16} />
+                            </button>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                <Pagination currentPage={userPage} totalItems={filteredUsers.length} onPageChange={setUserPage} />
               </motion.div>
             )}
 
             {activeTab === 'investments' && (
               <motion.div key="investments" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '30px' }}>Investment Verifications</h3>
-                {(!investmentRequests || investmentRequests.length === 0) ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Investment Verifications</h3>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={() => { setInvestSubTab('pending'); setInvestPage(1); }} className={`badge ${investSubTab === 'pending' ? 'badge-warning' : 'glass'}`} style={{ border: 'none', cursor: 'pointer', padding: '8px 15px' }}>Pending</button>
+                    <button onClick={() => { setInvestSubTab('approved'); setInvestPage(1); }} className={`badge ${investSubTab === 'approved' ? 'badge-success' : 'glass'}`} style={{ border: 'none', cursor: 'pointer', padding: '8px 15px' }}>History</button>
+                  </div>
+                </div>
+
+                {(!paginatedInvestments || paginatedInvestments.length === 0) ? (
                   <p style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '50px' }}>No payment requests found.</p>
                 ) : (
                   <div style={{ overflowX: 'auto' }}>
@@ -309,11 +415,11 @@ const AdminDashboard = () => {
                           <th>TXR ID / Amount</th>
                           <th>Status</th>
                           <th>Proof</th>
-                          <th style={{ textAlign: 'right' }}>Actions</th>
+                          {investSubTab === 'pending' && <th style={{ textAlign: 'right' }}>Actions</th>}
                         </tr>
                       </thead>
                       <tbody>
-                        {[...investmentRequests].reverse().map(r => (
+                        {paginatedInvestments.map(r => (
                           <tr key={r.id}>
                             <td>
                               <div style={{ fontWeight: 600 }}>{r.username}</div>
@@ -333,35 +439,43 @@ const AdminDashboard = () => {
                               </span>
                             </td>
                             <td>
-                              {r.screenshotUrl && (
+                              {r.screenshot && (
                                 <button
-                                  onClick={() => window.open(r.screenshotUrl, "_blank")}
+                                  onClick={() => setViewScreenshot(r.screenshot)}
                                   style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
                                 >
-                                  <Eye size={16} /> URL
+                                  <Eye size={16} /> View
                                 </button>
                               )}
                             </td>
-                            <td style={{ textAlign: 'right' }}>
-                              {r.status === 'pending' && (
+                            {investSubTab === 'pending' && (
+                              <td style={{ textAlign: 'right' }}>
                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                                   <button onClick={() => processInvestment(r.id, 'approved')} className="glass" style={{ color: 'var(--accent-green)', padding: '8px' }}><Check size={18} /></button>
                                   <button onClick={() => processInvestment(r.id, 'rejected')} className="glass" style={{ color: 'var(--accent-red)', padding: '8px' }}><X size={18} /></button>
                                 </div>
-                              )}
-                            </td>
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 )}
+                <Pagination currentPage={investPage} totalItems={filteredInvestments.length} onPageChange={setInvestPage} />
               </motion.div>
             )}
 
             {activeTab === 'withdrawals' && (
               <motion.div key="withdrawals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '30px' }}>Withdrawal Processing</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Withdrawal Processing</h3>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={() => { setWithdrawSubTab('pending'); setWithdrawPage(1); }} className={`badge ${withdrawSubTab === 'pending' ? 'badge-warning' : 'glass'}`} style={{ border: 'none', cursor: 'pointer', padding: '8px 15px' }}>Pending</button>
+                    <button onClick={() => { setWithdrawSubTab('approved'); setWithdrawPage(1); }} className={`badge ${withdrawSubTab === 'approved' ? 'badge-success' : 'glass'}`} style={{ border: 'none', cursor: 'pointer', padding: '8px 15px' }}>History</button>
+                  </div>
+                </div>
+
                 <div style={{ overflowX: 'auto' }}>
                   <table className="custom-table">
                     <thead>
@@ -372,11 +486,11 @@ const AdminDashboard = () => {
                         <th>Account Details</th>
                         <th>Date</th>
                         <th>Status</th>
-                        <th style={{ textAlign: 'right' }}>Actions</th>
+                        {withdrawSubTab === 'pending' && <th style={{ textAlign: 'right' }}>Actions</th>}
                       </tr>
                     </thead>
                     <tbody>
-                      {withdrawalRequests.map(w => (
+                      {paginatedWithdrawals.map(w => (
                         <tr key={w.id}>
                           <td>{w.username}</td>
                           <td style={{ fontWeight: 700, color: 'var(--primary)' }}>PKR {w.amount}</td>
@@ -384,19 +498,20 @@ const AdminDashboard = () => {
                           <td style={{ fontSize: '0.85rem' }}>{w.accountDetails}</td>
                           <td>{formatDate(w.timestamp)}</td>
                           <td><span className={`badge badge-${w.status === 'pending' ? 'warning' : w.status === 'approved' ? 'success' : 'error'}`}>{w.status.toUpperCase()}</span></td>
-                          <td style={{ textAlign: 'right' }}>
-                            {w.status === 'pending' && (
+                          {withdrawSubTab === 'pending' && (
+                            <td style={{ textAlign: 'right' }}>
                               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                                 <button onClick={() => processWithdrawal(w.id, 'approved')} className="glass" style={{ color: 'var(--accent-green)', padding: '6px' }}><Check size={16} /></button>
                                 <button onClick={() => processWithdrawal(w.id, 'rejected')} className="glass" style={{ color: 'var(--accent-red)', padding: '6px' }}><X size={16} /></button>
                               </div>
-                            )}
-                          </td>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                <Pagination currentPage={withdrawPage} totalItems={filteredWithdrawals.length} onPageChange={setWithdrawPage} />
               </motion.div>
             )}
 
@@ -416,7 +531,7 @@ const AdminDashboard = () => {
                         <input
                           value={plan.name}
                           onChange={(e) => handleUpdatePlanField(plan.id, 'name', e.target.value)}
-                          style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.2rem', fontWeight: 700, width: '70%' }}
+                          style={{ background: 'none', border: 'none', color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: 700, width: '70%' }}
                         />
                         <button onClick={() => handleDeletePlan(plan.id)} style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer' }}>
                           <Trash2 size={20} />
@@ -431,7 +546,7 @@ const AdminDashboard = () => {
                             className="glass"
                             value={plan.price}
                             onChange={(e) => handleUpdatePlanField(plan.id, 'price', e.target.value)}
-                            style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'white', fontWeight: 600 }}
+                            style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
                           />
                         </div>
                         <div>
@@ -441,7 +556,7 @@ const AdminDashboard = () => {
                             className="glass"
                             value={plan.dailyReward}
                             onChange={(e) => handleUpdatePlanField(plan.id, 'dailyReward', e.target.value)}
-                            style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'white', fontWeight: 600 }}
+                            style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
                           />
                         </div>
                       </div>
@@ -471,7 +586,7 @@ const AdminDashboard = () => {
                             s.adminWallets.easypaisa.number = e.target.value;
                             setSettings(s);
                           }}
-                          style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'white' }}
+                          style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'var(--text-main)' }}
                         />
                         <input
                           className="glass"
@@ -499,7 +614,7 @@ const AdminDashboard = () => {
                             s.adminWallets.jazzcash.number = e.target.value;
                             setSettings(s);
                           }}
-                          style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'white' }}
+                          style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'var(--text-main)' }}
                         />
                         <input
                           className="glass"
@@ -531,7 +646,7 @@ const AdminDashboard = () => {
                           onChange={(e) => {
                             setSettings({ ...settings, referralRewardPercent: parseInt(e.target.value) || 0 });
                           }}
-                          style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'white' }}
+                          style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'var(--text-main)' }}
                         />
                       </div>
                     </div>
@@ -549,18 +664,45 @@ const AdminDashboard = () => {
         )}
       </div>
 
+      {/* Edit User Modal */}
+      {editUserModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass" style={{ width: '400px', padding: '40px' }}>
+            <h2 style={{ marginBottom: '25px' }}>Edit Member: {editUserModal.username}</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Current Balance (PKR)</label>
+                <input className="glass" type="number" value={editUserModal.balance} onChange={e => setEditUserModal({ ...editUserModal, balance: Number(e.target.value) })} style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Invested Amount (PKR)</label>
+                <input className="glass" type="number" value={editUserModal.investedAmount} onChange={e => setEditUserModal({ ...editUserModal, investedAmount: Number(e.target.value) })} style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>New Password (Optional)</label>
+                <input className="glass" type="text" placeholder="Leave blank to keep same" value={editUserModal.password} onChange={e => setEditUserModal({ ...editUserModal, password: e.target.value })} style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                <button onClick={handleUpdateUser} className="gradient-btn" style={{ flex: 1 }}>Save Changes</button>
+                <button onClick={() => setEditUserModal(null)} className="glass" style={{ flex: 1, color: 'var(--text-main)' }}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Plan Modal */}
       {showAddPlan && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="glass" style={{ width: '400px', padding: '40px' }}>
             <h2 style={{ marginBottom: '25px' }}>Create New Plan</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <input className="glass" placeholder="Plan Name (e.g. Starter)" value={newPlan.name} onChange={e => setNewPlan({ ...newPlan, name: e.target.value })} style={{ width: '100%', padding: '12px', color: 'white' }} />
-              <input className="glass" type="number" placeholder="Price (PKR)" value={newPlan.price} onChange={e => setNewPlan({ ...newPlan, price: e.target.value })} style={{ width: '100%', padding: '12px', color: 'white' }} />
-              <input className="glass" type="number" placeholder="Daily Reward (PKR)" value={newPlan.dailyReward} onChange={e => setNewPlan({ ...newPlan, dailyReward: e.target.value })} style={{ width: '100%', padding: '12px', color: 'white' }} />
+              <input className="glass" placeholder="Plan Name (e.g. Starter)" value={newPlan.name} onChange={e => setNewPlan({ ...newPlan, name: e.target.value })} style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }} />
+              <input className="glass" type="number" placeholder="Price (PKR)" value={newPlan.price} onChange={e => setNewPlan({ ...newPlan, price: e.target.value })} style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }} />
+              <input className="glass" type="number" placeholder="Daily Reward (PKR)" value={newPlan.dailyReward} onChange={e => setNewPlan({ ...newPlan, dailyReward: e.target.value })} style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }} />
               <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
                 <button onClick={handleAddPlan} className="gradient-btn" style={{ flex: 1 }}>Create</button>
-                <button onClick={() => setShowAddPlan(false)} className="glass" style={{ flex: 1, color: 'white' }}>Cancel</button>
+                <button onClick={() => setShowAddPlan(false)} className="glass" style={{ flex: 1, color: 'var(--text-main)' }}>Cancel</button>
               </div>
             </div>
           </div>
