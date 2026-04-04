@@ -9,12 +9,16 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
-  const navItems = user.role === 'admin'
-    ? [{ path: '/admin', label: 'Admin', icon: <Shield size={20} /> }]
+  const navItems = user
+    ? (user.role === 'admin'
+      ? [{ path: '/admin', label: 'Admin', icon: <Shield size={20} /> }]
+      : [
+        { path: '/dashboard', label: 'Dashboard', icon: <Home size={20} /> },
+        { path: '/plans', label: 'Plans', icon: <PieChart size={20} /> },
+        { path: '/withdraw', label: 'Withdraw', icon: <Wallet size={20} /> },
+      ])
     : [
-      { path: '/dashboard', label: 'Dashboard', icon: <Home size={20} /> },
-      { path: '/plans', label: 'Plans', icon: <PieChart size={20} /> },
-      { path: '/withdraw', label: 'Withdraw', icon: <Wallet size={20} /> },
+      { path: '/', label: 'Home', icon: <Home size={20} /> },
     ];
 
   const isActive = (path) => location.pathname === path;
@@ -38,7 +42,9 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
           <div style={{ padding: '6px', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', borderRadius: '10px', display: 'flex' }}>
             <PieChart size={20} color="white" />
           </div>
-          <span className="gradient-text">{siteName}</span>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <span className="gradient-text">{siteName}</span>
+          </Link>
         </div>
 
         {/* Desktop Links */}
@@ -56,51 +62,33 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
 
         {/* Right-side actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div className="user-info-desktop" style={{ textAlign: 'right', display: 'none' }}>
-            <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{user.username}</div>
-          </div>
-
-          {/* ─── Theme Toggle Button ─── */}
           <button
-            id="theme-toggle-btn"
             onClick={onToggleTheme}
-            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className="glass theme-toggle-btn"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
-              border: '1px solid var(--glass-border)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: isDark ? '#f59e0b' : '#475569',
-              background: isDark
-                ? 'rgba(245, 158, 11, 0.1)'
-                : 'rgba(79, 172, 254, 0.1)',
-              transition: 'all 0.3s ease',
-              flexShrink: 0,
-            }}
+            className="glass"
+            style={{ width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)', cursor: 'pointer', border: '1px solid var(--glass-border)' }}
           >
-            <motion.div
-              key={isDark ? 'moon' : 'sun'}
-              initial={{ rotate: -30, opacity: 0, scale: 0.7 }}
-              animate={{ rotate: 0, opacity: 1, scale: 1 }}
-              exit={{ rotate: 30, opacity: 0, scale: 0.7 }}
-              transition={{ duration: 0.25 }}
-            >
-              {isDark ? <Moon size={18} /> : <Sun size={18} />}
-            </motion.div>
+            {isDark ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          <button
-            onClick={onLogout}
-            className="logout-btn-desktop glass"
-            style={{ padding: '8px', cursor: 'pointer', color: 'var(--accent-red)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
-          >
-            <LogOut size={18} />
-          </button>
+          {user ? (
+            <>
+              <div className="user-info-desktop" style={{ textAlign: 'right', display: 'none' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{user.username}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>{user.role}</div>
+              </div>
+              <button
+                onClick={onLogout}
+                className="glass"
+                style={{ width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-red)', cursor: 'pointer', border: '1px solid var(--glass-border)' }}
+              >
+                <LogOut size={20} />
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="gradient-btn" style={{ padding: '8px 20px', borderRadius: '10px', textDecoration: 'none', fontSize: '0.9rem' }}>
+              Login
+            </Link>
+          )}
 
           {/* Mobile Menu Toggle */}
           <button
@@ -128,29 +116,12 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
               zIndex: 2000,
               padding: '40px 20px',
               borderRadius: '0',
-              borderLeft: '1px solid var(--glass-border)'
+              borderLeft: '1px solid var(--glass-border)',
+              boxShadow: '-10px 0 30px rgba(0,0,0,0.5)'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-              {/* Theme toggle inside mobile menu too */}
-              <button
-                onClick={onToggleTheme}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  background: isDark ? 'rgba(245,158,11,0.1)' : 'rgba(79,172,254,0.1)',
-                  border: '1px solid var(--glass-border)',
-                  borderRadius: '10px',
-                  padding: '8px 14px',
-                  cursor: 'pointer',
-                  color: isDark ? '#f59e0b' : '#475569',
-                  fontFamily: 'var(--font-family)',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                }}
-              >
-                {isDark ? <Moon size={16} /> : <Sun size={16} />}
-                {isDark ? 'Light Mode' : 'Dark Mode'}
-              </button>
+              <div style={{ fontWeight: 800, fontSize: '1.2rem' }} className="gradient-text">{siteName}</div>
               <button onClick={toggleMenu} style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
                 <X size={28} />
               </button>
@@ -167,12 +138,20 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
                   {item.icon} {item.label}
                 </Link>
               ))}
+
               <hr style={{ border: 'none', borderTop: '1px solid var(--glass-border)', margin: '10px 0' }} />
-              <div style={{ padding: '10px' }}>
-                <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-main)' }}>{user.username}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '20px' }}>{user.role.toUpperCase()}</div>
-                <button onClick={onLogout} className="gradient-btn" style={{ width: '100%', background: 'var(--accent-red)' }}>Logout</button>
-              </div>
+
+              {user ? (
+                <div style={{ padding: '10px' }}>
+                  <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-main)' }}>{user.username}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '20px' }}>{user.role.toUpperCase()}</div>
+                  <button onClick={() => { onLogout(); toggleMenu(); }} className="gradient-btn" style={{ width: '100%', background: 'var(--accent-red)' }}>Logout</button>
+                </div>
+              ) : (
+                <Link to="/login" onClick={toggleMenu} className="gradient-btn" style={{ textAlign: 'center', textDecoration: 'none' }}>
+                  Login / Sign Up
+                </Link>
+              )}
             </div>
           </motion.div>
         )}
@@ -206,15 +185,14 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
           gap: 15px;
           padding: 12px;
           border-radius: 12px;
+          transition: all 0.2s;
+        }
+        .nav-item-mobile:hover {
+          background: rgba(255,255,255,0.05);
         }
         .nav-item-mobile.active {
           background: rgba(79, 172, 254, 0.1);
           color: var(--primary);
-        }
-
-        .theme-toggle-btn:hover {
-          transform: scale(1.08);
-          box-shadow: 0 4px 14px rgba(79, 172, 254, 0.25);
         }
 
         @media (min-width: 769px) {
@@ -223,7 +201,7 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
 
         @media (max-width: 768px) {
           .nav-links { display: none !important; }
-          .logout-btn-desktop { display: none !important; }
+          .user-info-desktop { display: none !important; }
           .mobile-toggle { display: block !important; }
         }
       `}</style>

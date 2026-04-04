@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Plans from './pages/Plans';
 import Withdraw from './pages/Withdraw';
+import Landing from './pages/Landing';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -80,7 +81,7 @@ function App() {
         }
       `}</style>
 
-      {user && location.pathname !== '/login' && (
+      {location.pathname !== '/login' && (
         <Navbar
           user={user}
           onLogout={handleLogout}
@@ -104,7 +105,7 @@ function App() {
           <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
           <Route path="/plans" element={user ? <Plans user={user} setUser={setUser} /> : <Navigate to="/login" />} />
           <Route path="/withdraw" element={user ? <Withdraw user={user} setUser={setUser} /> : <Navigate to="/login" />} />
-          <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/login'} />} />
+          <Route path="/" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> : <Landing />} />
         </Routes>
       </div>
     </div>
