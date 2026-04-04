@@ -55,7 +55,8 @@ const Dashboard = ({ user, setUser }) => {
 
   const copyReferral = () => {
     if (user && user.referralCode) {
-      navigator.clipboard.writeText(user.referralCode);
+      const link = `${window.location.origin}/login?ref=${user.referralCode}`;
+      navigator.clipboard.writeText(link);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { login, signup } from '../lib/storage';
 import { motion } from 'framer-motion';
 
@@ -8,6 +8,15 @@ const Login = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      setReferralCode(ref);
+      setIsLogin(false); // Default to signup so they can register with the code
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
