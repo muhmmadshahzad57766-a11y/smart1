@@ -684,6 +684,18 @@ const AdminDashboard = () => {
                           style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'var(--text-main)' }}
                         />
                       </div>
+                      <div>
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>Site Name (Brand)</label>
+                        <input
+                          type="text"
+                          className="glass"
+                          value={settings.siteName || ''}
+                          onChange={(e) => {
+                            setSettings({ ...settings, siteName: e.target.value });
+                          }}
+                          style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'var(--text-main)' }}
+                        />
+                      </div>
                     </div>
                   </div>
 

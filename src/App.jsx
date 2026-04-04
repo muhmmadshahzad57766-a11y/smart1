@@ -11,7 +11,7 @@ import Withdraw from './pages/Withdraw';
 function App() {
   const [user, setUser] = useState(null);
   const [theme, setThemeState] = useState(() => getTheme());
-  const [settings, setSettings] = useState({ themeColor: '#4facfe' });
+  const [settings, setSettings] = useState({ themeColor: '#4facfe', siteName: 'InvestSmart' });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,7 +29,6 @@ function App() {
     initApp();
   }, []);
 
-  // Apply / remove light-theme class on body whenever theme changes
   useEffect(() => {
     if (theme === 'light') {
       document.body.classList.add('light-theme');
@@ -37,6 +36,12 @@ function App() {
       document.body.classList.remove('light-theme');
     }
   }, [theme]);
+
+  useEffect(() => {
+    if (settings?.siteName) {
+      document.title = settings.siteName;
+    }
+  }, [settings?.siteName]);
 
   const handleToggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
@@ -81,6 +86,7 @@ function App() {
           onLogout={handleLogout}
           theme={theme}
           onToggleTheme={handleToggleTheme}
+          siteName={settings?.siteName || 'InvestSmart'}
         />
       )}
 

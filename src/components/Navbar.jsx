@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { LogOut, Home, PieChart, Shield, Wallet, Menu, X, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Navbar = ({ user, onLogout, theme, onToggleTheme }) => {
+const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
@@ -12,10 +12,10 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme }) => {
   const navItems = user.role === 'admin'
     ? [{ path: '/admin', label: 'Admin', icon: <Shield size={20} /> }]
     : [
-        { path: '/dashboard', label: 'Dashboard', icon: <Home size={20} /> },
-        { path: '/plans',     label: 'Plans',     icon: <PieChart size={20} /> },
-        { path: '/withdraw',  label: 'Withdraw',  icon: <Wallet size={20} /> },
-      ];
+      { path: '/dashboard', label: 'Dashboard', icon: <Home size={20} /> },
+      { path: '/plans', label: 'Plans', icon: <PieChart size={20} /> },
+      { path: '/withdraw', label: 'Withdraw', icon: <Wallet size={20} /> },
+    ];
 
   const isActive = (path) => location.pathname === path;
   const isDark = theme === 'dark';
@@ -38,7 +38,7 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme }) => {
           <div style={{ padding: '6px', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', borderRadius: '10px', display: 'flex' }}>
             <PieChart size={20} color="white" />
           </div>
-          <span className="gradient-text">InvestSmart</span>
+          <span className="gradient-text">{siteName}</span>
         </div>
 
         {/* Desktop Links */}
@@ -86,8 +86,8 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme }) => {
             <motion.div
               key={isDark ? 'moon' : 'sun'}
               initial={{ rotate: -30, opacity: 0, scale: 0.7 }}
-              animate={{ rotate: 0,   opacity: 1, scale: 1   }}
-              exit={{ rotate: 30,    opacity: 0, scale: 0.7 }}
+              animate={{ rotate: 0, opacity: 1, scale: 1 }}
+              exit={{ rotate: 30, opacity: 0, scale: 0.7 }}
               transition={{ duration: 0.25 }}
             >
               {isDark ? <Moon size={18} /> : <Sun size={18} />}
