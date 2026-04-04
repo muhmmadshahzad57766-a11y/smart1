@@ -1,15 +1,21 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Shield, Users, ArrowRight, Zap, Target, Award } from 'lucide-react';
+import { TrendingUp, Shield, Users, ArrowRight, Zap, Target, Award, Loader } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { fetchPlans } from '../lib/storage';
 
 const Landing = () => {
-    const plans = [
-        { name: 'Bronze Strategy', min: '1,000', roi: '3.5%', color: '#cd7f32' },
-        { name: 'Silver Strategy', min: '5,000', roi: '5.0%', color: '#c0c0c0' },
-        { name: 'Gold Strategy', min: '15,000', roi: '8.5%', color: '#ffd700' },
-        { name: 'Pro Strategy', min: '50,000', roi: '12.0%', color: 'var(--primary)' },
-    ];
+    const [plans, setPlans] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const getPlans = async () => {
+            const data = await fetchPlans();
+            setPlans(data);
+            setLoading(false);
+        };
+        getPlans();
+    }, []);
 
     const features = [
         { icon: <Shield size={32} />, title: 'Secure Assets', desc: 'Bank-grade encryption and Supabase-backed security layers for your peace of mind.' },
@@ -18,7 +24,7 @@ const Landing = () => {
     ];
 
     return (
-        <div style={{ background: 'var(--bg-main)', color: 'white', minHeight: '100vh' }}>
+        <div style={{ background: 'var(--bg-main)', color: 'var(--text-main)', minHeight: '100vh' }}>
             {/* Hero Section */}
             <section className="landing-hero">
                 <div className="landing-grid container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -90,23 +96,48 @@ const Landing = () => {
             <section id="plans" style={{ padding: '100px 5%' }}>
                 <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
                     <h2 className="section-title">Growth <span className="gradient-text">Strategies</span></h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '25px' }}>
-                        {plans.map((p, i) => (
-                            <div key={i} className="glass" style={{ padding: '35px', borderRadius: '25px', position: 'relative', overflow: 'hidden', border: `1px solid ${p.color}33` }}>
-                                <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '100px', height: '100px', background: p.color, opacity: 0.05, borderRadius: '50%' }}></div>
-                                <h4 style={{ color: p.color, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '2px', marginBottom: '15px' }}>{p.name}</h4>
-                                <div style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '5px' }}>{p.roi}</div>
-                                <div style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '30px' }}>Daily ROI Guaranteed</div>
-                                <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '15px', marginBottom: '25px' }}>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Minimum Deposit</div>
-                                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>PKR {p.min}</div>
-                                </div>
-                                <Link to="/login" style={{ display: 'block', textAlign: 'center', padding: '12px', background: 'white', color: 'black', borderRadius: '12px', fontWeight: 700, textDecoration: 'none', transition: 'all 0.3s' }}>
-                                    Select Plan
-                                </Link>
-                            </div>
-                        ))}
-                    </div>
+
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: '50px' }}>
+                            <Loader className="floating" size={40} color="var(--primary)" />
+                            <p style={{ marginTop: '20px', color: 'var(--text-dim)' }}>Syncing strategies...</p>
+                        </div>
+                    ) : plans.length === 0 ? (
+                        <p style={{ textAlign: 'center', color: 'var(--text-dim)' }}>Premium strategies starting soon.</p>
+                    ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '25px' }}>
+                            {plans.map((p, i) => {
+                                // Determine a accent color based on price or name
+                                const accentColor = p.price >= 50000 ? 'var(--primary)' : p.price >= 15000 ? '#ffd700' : p.price >= 5000 ? '#c0c0c0' : '#cd7f32';
+
+                                return (
+                                    <div key={i} className="glass" style={{ padding: '35px', borderRadius: '25px', position: 'relative', overflow: 'hidden', border: `1px solid ${accentColor}33` }}>
+                                        <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '100px', height: '100px', background: accentColor, opacity: 0.05, borderRadius: '50%' }}></div>
+                                        <h4 style={{ color: accentColor, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '2px', marginBottom: '15px' }}>{p.name}</h4>
+                                        <div style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '5px' }}>PKR {p.dailyReward}</div>
+                                        <div style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '30px' }}>Daily Yield Retuned</div>
+                                        <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '15px', marginBottom: '25px' }}>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Minimum Deposit</div>
+                                            <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-main)' }}>PKR {p.price.toLocaleString()}</div>
+                                        </div>
+                                        <Link to="/login" style={{
+                                            display: 'block',
+                                            textAlign: 'center',
+                                            padding: '12px',
+                                            background: 'var(--text-main)',
+                                            color: 'var(--bg-main)',
+                                            borderRadius: '12px',
+                                            fontWeight: 700,
+                                            textDecoration: 'none',
+                                            transition: 'all 0.3s'
+                                        }}>
+                                            Select Plan
+                                        </Link>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </section>
 
