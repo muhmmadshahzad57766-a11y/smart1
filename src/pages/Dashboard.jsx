@@ -178,7 +178,7 @@ const Dashboard = ({ user, setUser }) => {
         marginBottom: '40px'
       }}>
         {/* Balance Card - Premium */}
-        <div className="stat-card" style={{ background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9))' }}>
+        <div className="stat-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
             <div className="stat-card-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-green)', marginBottom: 0 }}>
               <Wallet size={24} />
