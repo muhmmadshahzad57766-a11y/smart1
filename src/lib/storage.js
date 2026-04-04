@@ -28,13 +28,19 @@ export const getCurrentUser = async () => {
 export const uploadScreenshot = async (file) => {
   if (!file) return null;
   const fileName = `${Date.now()}-${file.name}`;
-  const { data, error } = await supabase.storage.from('screenshots').upload(fileName, file);
-  if (error) {
-    console.error("Storage error:", error);
+  try {
+    const { data, error } = await supabase.storage.from('screenshots').upload(fileName, file);
+    if (error) {
+      console.error("Supabase Storage Error:", error);
+      alert("Upload Error: " + error.message + ". Make sure you created a bucket named 'screenshots' and set it to Public!");
+      return null;
+    }
+    const { data: { publicUrl } } = supabase.storage.from('screenshots').getPublicUrl(fileName);
+    return publicUrl;
+  } catch (err) {
+    console.error("Upload Catch:", err);
     return null;
   }
-  const { data: { publicUrl } } = supabase.storage.from('screenshots').getPublicUrl(fileName);
-  return publicUrl;
 };
 
 export const login = async (username, password) => {
@@ -195,7 +201,7 @@ export const updatePlan = async (id, updates) => {
 };
 
 export const addInvestmentRequest = async (userId, requestData) => {
-  const { data } = await supabase.from('investment_requests').insert([{
+  const { data, error } = await supabase.from('investment_requests').insert([{
     user_id: userId,
     plan_id: requestData.planId,
     plan_name: requestData.planName,
@@ -207,6 +213,12 @@ export const addInvestmentRequest = async (userId, requestData) => {
     screenshot: requestData.screenshot,
     status: 'pending'
   }]).select().single();
+
+  if (error) {
+    console.error("Insert Error:", error);
+    alert("Database Error: " + error.message);
+    return { error: error.message };
+  }
   return data;
 };
 
