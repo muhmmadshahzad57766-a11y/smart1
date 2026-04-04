@@ -11,7 +11,8 @@ import {
   handleInvestmentRequest,
   updateSettings,
   handleWithdrawal,
-  updateUserData
+  updateUserData,
+  deleteUser
 } from '../lib/storage';
 import {
   Users,
@@ -175,6 +176,18 @@ const AdminDashboard = () => {
       refreshData();
     } catch (e) {
       alert('Error updating user');
+    }
+  };
+
+  const handleDeleteUser = async (u) => {
+    if (window.confirm(`Are you extremely sure you want to delete the user ${u.username}? This action is permanent and cannot be undone.`)) {
+      try {
+        await deleteUser(u.id);
+        alert('User removed successfully');
+        refreshData();
+      } catch (e) {
+        alert('Error removing user');
+      }
     }
   };
 
@@ -370,19 +383,28 @@ const AdminDashboard = () => {
                           <td>PKR {(Number(u.investedAmount) || 0).toLocaleString()}</td>
                           <td>{formatDate(u.createdAt)}</td>
                           <td style={{ textAlign: 'right' }}>
-                            <button
-                              onClick={() => setEditUserModal({
-                                id: u.id,
-                                username: u.username,
-                                balance: Number(u.balance) || 0,
-                                investedAmount: Number(u.investedAmount) || 0,
-                                password: ''
-                              })}
-                              className="glass"
-                              style={{ padding: '8px', color: 'var(--text-dim)' }}
-                            >
-                              <Edit size={16} />
-                            </button>
+                            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                              <button
+                                onClick={() => setEditUserModal({
+                                  id: u.id,
+                                  username: u.username,
+                                  balance: Number(u.balance) || 0,
+                                  investedAmount: Number(u.investedAmount) || 0,
+                                  password: ''
+                                })}
+                                className="glass"
+                                style={{ padding: '8px', color: 'var(--text-dim)' }}
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(u)}
+                                className="glass"
+                                style={{ padding: '8px', color: 'var(--accent-red)' }}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

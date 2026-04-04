@@ -240,12 +240,14 @@ body {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 1px;
+  text-align: left;
 }
 
 .custom-table tr td {
   padding: 16px;
   background: rgba(255, 255, 255, 0.02);
   transition: var(--transition);
+  text-align: left;
 }
 
 .custom-table tr td:first-child { border-radius: 12px 0 0 12px; }

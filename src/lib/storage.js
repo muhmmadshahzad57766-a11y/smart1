@@ -106,6 +106,10 @@ export const updateUserData = async (userId, updates) => {
   };
 };
 
+export const deleteUser = async (userId) => {
+  await supabase.from('users').delete().eq('id', userId);
+};
+
 // Getting Settings
 export const getSettings = async () => {
   const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single();
