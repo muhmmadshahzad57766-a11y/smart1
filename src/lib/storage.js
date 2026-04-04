@@ -224,11 +224,20 @@ export const handleInvestmentRequest = async (requestId, status) => {
         }).eq('id', referrer.id);
       }
 
+      const firstApproveReward = Number(plan.daily_reward || 0);
+
       await supabase.from('users').update({
         current_plan_id: plan.id,
         plan_start_time: new Date().toISOString(),
-        invested_amount: investedAm
+        invested_amount: investedAm,
+        balance: Number(user.balance || 0) + firstApproveReward
       }).eq('id', request.user_id);
+
+      await supabase.from('rewards').insert([{
+        user_id: request.user_id,
+        amount: firstApproveReward,
+        timestamp: new Date().toISOString()
+      }]);
     }
   }
   return {};
@@ -299,7 +308,7 @@ export const calculateRewards = async (userId) => {
     .eq('user_id', userId)
     .order('timestamp', { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   const lastRewardTime = lastReward ? new Date(lastReward.timestamp).getTime() : new Date(user.plan_start_time).getTime();
   const now = Date.now();
