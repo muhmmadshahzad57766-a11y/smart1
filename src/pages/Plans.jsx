@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchPlans, addInvestmentRequest, getSettings } from '../lib/storage';
+import { fetchPlans, addInvestmentRequest, getSettings, uploadScreenshot } from '../lib/storage';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle,
@@ -28,6 +28,7 @@ const Plans = ({ user, setUser }) => {
     transactionId: '',
     screenshot: ''
   });
+  const [screenshotFile, setScreenshotFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -49,8 +50,9 @@ const Plans = ({ user, setUser }) => {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    setScreenshotFile(file);
 
-    // Use Canvas to compress image if it's too large
+    // Use Canvas to compress image for the preview only
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -58,21 +60,16 @@ const Plans = ({ user, setUser }) => {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-
-        // Resize if larger than 800px
-        const MAX_WIDTH = 800;
+        const MAX_WIDTH = 400; // Smaller preview
         if (width > MAX_WIDTH) {
           height *= MAX_WIDTH / width;
           width = MAX_WIDTH;
         }
-
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-
-        // Convert to low-quality JPEG to save space
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
         setFormData({ ...formData, screenshot: dataUrl });
       };
       img.src = event.target.result;
@@ -94,10 +91,18 @@ const Plans = ({ user, setUser }) => {
     }
 
     setSubmitting(true);
+
+    let screenshotUrl = formData.screenshot;
+    if (screenshotFile) {
+      const uploadedUrl = await uploadScreenshot(screenshotFile);
+      if (uploadedUrl) screenshotUrl = uploadedUrl;
+    }
+
     await addInvestmentRequest(user.id, {
       planId: selectedPlan.id,
       planName: selectedPlan.name,
       ...formData,
+      screenshot: screenshotUrl,
       amountSent: parseInt(formData.amountSent)
     });
 

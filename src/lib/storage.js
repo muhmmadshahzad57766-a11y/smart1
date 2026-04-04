@@ -20,8 +20,21 @@ export const getCurrentUser = async () => {
     referralEarnings: data.referral_earnings,
     referralCount: data.referral_count,
     planId: data.current_plan_id,
-    planStartTime: data.plan_start_time
+    planStartTime: data.plan_start_time,
+    balance: data.balance || 0
   };
+};
+
+export const uploadScreenshot = async (file) => {
+  if (!file) return null;
+  const fileName = `${Date.now()}-${file.name}`;
+  const { data, error } = await supabase.storage.from('screenshots').upload(fileName, file);
+  if (error) {
+    console.error("Storage error:", error);
+    return null;
+  }
+  const { data: { publicUrl } } = supabase.storage.from('screenshots').getPublicUrl(fileName);
+  return publicUrl;
 };
 
 export const login = async (username, password) => {
@@ -185,6 +198,7 @@ export const addInvestmentRequest = async (userId, requestData) => {
   const { data } = await supabase.from('investment_requests').insert([{
     user_id: userId,
     plan_id: requestData.planId,
+    plan_name: requestData.planName,
     transaction_id: requestData.transactionId,
     method: requestData.method,
     sender_account_name: requestData.senderAccountName,
