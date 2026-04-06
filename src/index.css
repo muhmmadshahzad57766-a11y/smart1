@@ -171,7 +171,7 @@ body {
   }
 
   .content {
-    padding: clamp(10px, 3vw, 20px) !important;
+    padding: clamp(80px, 12vw, 100px) clamp(10px, 4vw, 20px) 40px !important;
   }
 
   .stat-card {
@@ -423,6 +423,11 @@ body.light-theme .modal-content {
 
 .custom-table tr:hover td {
   background: rgba(255, 255, 255, 0.05);
+}
+
+.table-container {
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
 }
 
 /* Animations */

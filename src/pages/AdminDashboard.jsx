@@ -249,24 +249,24 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div style={{ padding: '30px', maxWidth: '1400px', margin: '0 auto' }} className="fade-in">
+    <div style={{ padding: 'clamp(15px, 4vw, 30px)', maxWidth: '1400px', margin: '0 auto' }} className="fade-in">
       {/* Header */}
-      <header style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <header style={{ marginBottom: 'clamp(25px, 8vw, 40px)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '20px' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', marginBottom: '10px', fontSize: '0.9rem', fontWeight: 600 }}>
-            <Settings size={16} /> ADMINISTRATOR VIEW
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', marginBottom: '10px', fontSize: '0.8rem', fontWeight: 600 }}>
+            <Settings size={14} /> ADMINISTRATOR VIEW
           </div>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800 }}>System <span className="gradient-text">Overview</span></h1>
-          <p style={{ color: 'var(--text-dim)', marginTop: '5px' }}>Monitor platform performance and manage user assets.</p>
+          <h1 style={{ fontSize: 'clamp(1.8rem, 6vw, 2.5rem)', fontWeight: 800, lineHeight: 1.2 }}>System <span className="gradient-text">Overview</span></h1>
+          <p style={{ color: 'var(--text-dim)', marginTop: '5px', fontSize: '0.9rem' }}>Monitor platform performance and manage user assets.</p>
         </div>
       </header>
 
       {/* Stats Grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
         gap: '20px',
-        marginBottom: '40px'
+        marginBottom: 'clamp(25px, 8vw, 40px)'
       }}>
         <div className="stat-card">
           <div className="stat-card-icon" style={{ background: 'rgba(79, 172, 254, 0.1)', color: 'var(--primary)' }}>
@@ -345,14 +345,14 @@ const AdminDashboard = () => {
       </div>
 
       {/* Tab Content */}
-      <div className="glass" style={{ padding: '30px', minHeight: '400px' }}>
+      <div className="glass" style={{ padding: 'clamp(15px, 4vw, 30px)', minHeight: '400px' }}>
         {loading ? (
           <div style={{ textAlign: 'center', color: 'var(--primary)', padding: '50px' }}>Loading Data...</div>
         ) : (
           <AnimatePresence mode="wait">
             {activeTab === 'users' && (
               <motion.div key="users" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
                   <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>User Management</h3>
                   <input
                     type="text"
@@ -360,7 +360,7 @@ const AdminDashboard = () => {
                     className="glass"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ padding: '12px 15px', width: '300px', fontSize: '0.9rem', color: 'var(--text-main)' }}
+                    style={{ padding: '12px 15px', width: 'clamp(200px, 100%, 300px)', fontSize: '0.9rem', color: 'var(--text-main)' }}
                   />
                 </div>
                 <div className="table-container">
@@ -592,9 +592,9 @@ const AdminDashboard = () => {
             {activeTab === 'settings' && (
               <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '30px' }}>Global Settings</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '30px' }}>
                   {/* Payment Details */}
-                  <div className="glass" style={{ padding: '30px', borderRadius: '24px' }}>
+                  <div className="glass" style={{ padding: 'clamp(20px, 5vw, 30px)', borderRadius: '24px' }}>
                     <h4 style={{ marginBottom: '20px', fontWeight: 700 }}>Admin Wallet (For User Payments)</h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                       <div>
@@ -657,7 +657,7 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Other Config */}
-                  <div className="glass" style={{ padding: '30px', borderRadius: '24px' }}>
+                  <div className="glass" style={{ padding: 'clamp(20px, 5vw, 30px)', borderRadius: '24px' }}>
                     <h4 style={{ marginBottom: '20px', fontWeight: 700 }}>Platform Customization</h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                       <div>

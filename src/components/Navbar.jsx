@@ -24,16 +24,16 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
 
   return (
     <>
-      <nav className="glass" style={{
+      <nav className="glass navbar-main" style={{
         height: 'var(--header-height)',
-        margin: '10px 15px',
-        padding: '0 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         position: 'sticky',
         top: '10px',
-        zIndex: 1000
+        zIndex: 1000,
+        margin: '10px 15px',
+        padding: '0 20px',
       }}>
         {/* Logo */}
         <div className="logo" style={{ fontWeight: 800, fontSize: 'clamp(1rem, 4vw, 1.2rem)', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -202,6 +202,17 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
           .nav-links { display: none !important; }
           .user-info-desktop { display: none !important; }
           .mobile-toggle { display: block !important; }
+        }
+
+        @media (max-width: 480px) {
+          .navbar-main {
+            margin: 5px 8px !important;
+            padding: 0 12px !important;
+          }
+          .logo {
+            font-size: 1rem !important;
+            gap: 5px !important;
+          }
         }
       `}</style>
     </>
