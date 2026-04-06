@@ -18,13 +18,18 @@ function App() {
 
   useEffect(() => {
     const initApp = async () => {
-      const [currentUser, appSettings] = await Promise.all([
-        getCurrentUser(),
-        getSettings()
-      ]);
-      setUser(currentUser);
-      setSettings(appSettings);
-      setLoading(false);
+      try {
+        const [currentUser, appSettings] = await Promise.all([
+          getCurrentUser(),
+          getSettings()
+        ]);
+        setUser(currentUser);
+        setSettings(appSettings);
+      } catch (err) {
+        console.error("Initialization Error:", err);
+      } finally {
+        setLoading(false);
+      }
     };
     initApp();
   }, []);
@@ -59,7 +64,7 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-main)' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-darker)' }}>
         <div className="gradient-text" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Loading...</div>
       </div>
     );
