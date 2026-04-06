@@ -7,7 +7,6 @@ import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Plans from './pages/Plans';
 import Withdraw from './pages/Withdraw';
-import Landing from './pages/Landing';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -98,14 +97,18 @@ function App() {
             element={
               user
                 ? <Navigate to="/" replace />
-                : <Login onLogin={(u) => { setUser(u); navigate(u.role === 'admin' ? '/admin' : '/dashboard'); }} />
+                : <Login onLogin={(u, isSignup) => {
+                  setUser(u);
+                  if (isSignup) navigate('/plans');
+                  else navigate(u.role === 'admin' ? '/admin' : '/dashboard');
+                }} />
             }
           />
           <Route path="/dashboard" element={user ? <Dashboard user={user} setUser={setUser} /> : <Navigate to="/login" />} />
           <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
           <Route path="/plans" element={user ? <Plans user={user} setUser={setUser} /> : <Navigate to="/login" />} />
           <Route path="/withdraw" element={user ? <Withdraw user={user} setUser={setUser} /> : <Navigate to="/login" />} />
-          <Route path="/" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> : <Landing />} />
+          <Route path="/" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> : <Navigate to="/login" replace />} />
         </Routes>
       </div>
     </div>

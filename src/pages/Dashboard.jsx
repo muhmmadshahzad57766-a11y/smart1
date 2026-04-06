@@ -72,7 +72,7 @@ const Dashboard = ({ user, setUser }) => {
   if (!user || loading) return <div style={{ padding: '50px', textAlign: 'center' }}>Loading user data...</div>;
 
   return (
-    <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto' }} className="fade-in">
+    <div style={{ padding: 'clamp(15px, 4vw, 30px)', maxWidth: '1200px', margin: '0 auto' }} className="fade-in">
 
       {/* Notifications / Alerts */}
       <AnimatePresence>
@@ -142,7 +142,7 @@ const Dashboard = ({ user, setUser }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', marginBottom: '10px', fontSize: '0.9rem', fontWeight: 600 }}>
               <Shield size={18} /> SECURE INVESTMENT PORTFOLIO
             </div>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 800 }}>Welcome back, <span className="gradient-text">{user.username}</span></h1>
+            <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', fontWeight: 800 }}>Welcome back, <span className="gradient-text">{user.username}</span></h1>
             <p style={{ color: 'var(--text-dim)', marginTop: '5px', fontSize: '1.1rem' }}>
               Your wealth is being managed with precision. {userPlan ? `Your ${userPlan.name} strategy is active.` : 'Start your journey today.'}
             </p>
@@ -158,7 +158,7 @@ const Dashboard = ({ user, setUser }) => {
               alignItems: 'center',
               gap: '15px'
             }}>
-              <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black' }}>
+              <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme === 'dark' ? 'black' : 'white' }}>
                 <TrendingUp size={24} />
               </div>
               <div>
@@ -173,8 +173,8 @@ const Dashboard = ({ user, setUser }) => {
       {/* Main Stats Grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '25px',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+        gap: '20px',
         marginBottom: '40px'
       }}>
         {/* Balance Card - Premium */}
@@ -188,7 +188,7 @@ const Dashboard = ({ user, setUser }) => {
           <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Available Funds</p>
           <h2 style={{ fontSize: '2.8rem', fontWeight: 800, margin: '5px 0' }}>PKR {(Number(user.balance) || 0).toLocaleString()}</h2>
           <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button onClick={() => window.location.href = '/withdraw'} className="gradient-btn" style={{ flex: 1, padding: '14px' }}>Withdraw Assets</button>
+            <button onClick={() => window.location.href = '/withdraw'} className="gradient-btn" style={{ flex: 1, padding: '14px', width: '100%' }}>Withdraw Assets</button>
           </div>
         </div>
 
@@ -238,7 +238,7 @@ const Dashboard = ({ user, setUser }) => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '25px' }}>
         {/* Activity Feed */}
         <div className="glass" style={{ padding: '30px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '30px' }}>
@@ -297,10 +297,10 @@ const Dashboard = ({ user, setUser }) => {
             </div>
 
             <p style={{ color: 'var(--text-dim)', fontSize: '0.95rem', marginBottom: '20px', lineHeight: '1.6' }}>
-              Expand your network and earn <b style={{ color: 'white' }}>{settings?.referralRewardPercent || 10}%</b> for every successful referral investment.
+              Expand your network and earn <b style={{ color: 'var(--text-main)' }}>{settings?.referralRewardPercent || 10}%</b> for every successful referral investment.
             </p>
 
-            <div style={{ display: 'flex', gap: '10px', background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+            <div style={{ display: 'flex', flexDirection: window.innerWidth < 480 ? 'column' : 'row', gap: '10px', background: 'rgba(0,0,0,0.1)', padding: '6px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
               <div style={{ flex: 1, padding: '12px 15px', fontFamily: 'monospace', fontSize: '1.1rem', letterSpacing: '3px', color: 'var(--primary)', fontWeight: 700 }}>
                 {user.referralCode || 'REF-XXXXX'}
               </div>
@@ -311,7 +311,7 @@ const Dashboard = ({ user, setUser }) => {
                   background: copied ? 'var(--accent-green)' : 'var(--primary)',
                   border: 'none',
                   borderRadius: '12px',
-                  color: 'black',
+                  color: isDark ? 'black' : 'white',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'flex',
@@ -341,11 +341,11 @@ const Dashboard = ({ user, setUser }) => {
           <div className="glass" style={{ padding: '30px' }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '20px' }}>Quick Portfolio Actions</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <button onClick={() => window.location.href = '/plans'} className="glass" style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer', color: 'white' }}>
+              <button onClick={() => window.location.href = '/plans'} className="glass" style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer', color: 'var(--text-main)', background: 'var(--surface)' }}>
                 <TrendingUp size={24} style={{ color: 'var(--primary)' }} />
                 <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Upgrade Plan</span>
               </button>
-              <button onClick={() => window.location.href = '/withdraw'} className="glass" style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer', color: 'white' }}>
+              <button onClick={() => window.location.href = '/withdraw'} className="glass" style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer', color: 'var(--text-main)', background: 'var(--surface)' }}>
                 <Wallet size={24} style={{ color: 'var(--secondary)' }} />
                 <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Liquidate Assets</span>
               </button>

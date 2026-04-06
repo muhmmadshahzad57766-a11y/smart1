@@ -17,9 +17,7 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
         { path: '/plans', label: 'Plans', icon: <PieChart size={20} /> },
         { path: '/withdraw', label: 'Withdraw', icon: <Wallet size={20} /> },
       ])
-    : [
-      { path: '/', label: 'Home', icon: <Home size={20} /> },
-    ];
+    : [];
 
   const isActive = (path) => location.pathname === path;
   const isDark = theme === 'dark';
@@ -38,9 +36,9 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
         zIndex: 1000
       }}>
         {/* Logo */}
-        <div className="logo" style={{ fontWeight: 800, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ padding: '6px', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', borderRadius: '10px', display: 'flex' }}>
-            <PieChart size={20} color="white" />
+        <div className="logo" style={{ fontWeight: 800, fontSize: 'clamp(1rem, 4vw, 1.2rem)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ padding: '4px', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', borderRadius: '8px', display: 'flex' }}>
+            <PieChart size={18} color="white" />
           </div>
           <Link to="/" style={{ textDecoration: 'none' }}>
             <span className="gradient-text">{siteName}</span>
@@ -54,6 +52,7 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
               key={item.path}
               to={item.path}
               className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
+              style={{ fontSize: '0.85rem' }}
             >
               {item.icon} {item.label}
             </Link>
@@ -145,7 +144,7 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
                 <div style={{ padding: '10px' }}>
                   <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-main)' }}>{user.username}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '20px' }}>{user.role.toUpperCase()}</div>
-                  <button onClick={() => { onLogout(); toggleMenu(); }} className="gradient-btn" style={{ width: '100%', background: 'var(--accent-red)' }}>Logout</button>
+                  <button onClick={() => { onLogout(); toggleMenu(); }} className="gradient-btn" style={{ width: '100%', background: 'var(--accent-red)', color: 'white' }}>Logout</button>
                 </div>
               ) : (
                 <Link to="/login" onClick={toggleMenu} className="gradient-btn" style={{ textAlign: 'center', textDecoration: 'none' }}>

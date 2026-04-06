@@ -34,7 +34,7 @@ const Login = ({ onLogin }) => {
       }
       const result = await signup(username, password);
       if (result.error) setError(result.error);
-      else onLogin(result);
+      else onLogin(result, true); // Pass true for isSignup
     }
   };
 
@@ -65,7 +65,7 @@ const Login = ({ onLogin }) => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              style={{ width: '100%', padding: '12px', color: 'white' }}
+              style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }}
             />
           </div>
           <div className="input-group">
@@ -76,7 +76,7 @@ const Login = ({ onLogin }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={{ width: '100%', padding: '12px', color: 'white' }}
+              style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }}
             />
           </div>
 
@@ -89,7 +89,7 @@ const Login = ({ onLogin }) => {
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value)}
                 placeholder="REF-XXXXX"
-                style={{ width: '100%', padding: '12px', color: 'white' }}
+                style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }}
               />
             </div>
           )}

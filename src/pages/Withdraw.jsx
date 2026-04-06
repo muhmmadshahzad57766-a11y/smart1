@@ -58,13 +58,13 @@ const Withdraw = ({ user, setUser }) => {
   };
 
   return (
-    <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ padding: 'clamp(15px, 4vw, 30px)', maxWidth: '800px', margin: '0 auto' }}>
       <header style={{ marginBottom: '40px' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 700 }}>Withdraw <span className="gradient-text">Funds</span></h1>
         <p style={{ color: 'var(--text-dim)' }}>Request a payout to your preferred mobile wallet.</p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '20px' }}>
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="card glass" style={{ height: 'fit-content' }}>
           <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Wallet size={20} color="var(--primary)" /> Available Balance
@@ -86,7 +86,7 @@ const Withdraw = ({ user, setUser }) => {
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder={`Min. ${settings.minWithdrawal || 500}`}
                 required
-                style={{ width: '100%', padding: '12px', color: 'white' }}
+                style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }}
               />
             </div>
 
@@ -96,7 +96,7 @@ const Withdraw = ({ user, setUser }) => {
                 className="glass"
                 value={method}
                 onChange={(e) => setMethod(e.target.value)}
-                style={{ width: '100%', padding: '12px', color: 'white', background: 'var(--bg-dark)' }}
+                style={{ width: '100%', padding: '12px', color: 'var(--text-main)', background: 'var(--surface)' }}
               >
                 <option value="JazzCash">JazzCash</option>
                 <option value="EasyPaisa">EasyPaisa</option>
@@ -113,7 +113,7 @@ const Withdraw = ({ user, setUser }) => {
                 onChange={(e) => setAccountNumber(e.target.value)}
                 placeholder="e.g. 0300 1234567"
                 required
-                style={{ width: '100%', padding: '12px', color: 'white' }}
+                style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }}
               />
             </div>
 

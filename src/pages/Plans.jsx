@@ -116,13 +116,13 @@ const Plans = ({ user, setUser }) => {
   if (loadingConfig) return <div style={{ textAlign: 'center', padding: '50px' }}>Loading...</div>;
 
   return (
-    <div style={{ padding: '60px 20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ padding: 'clamp(20px, 5vw, 60px) 20px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-        <h1 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '15px' }}>Premium <span className="gradient-text">Investment Plans</span></h1>
+        <h1 style={{ fontSize: 'clamp(1.8rem, 6vw, 3rem)', fontWeight: 800, marginBottom: '15px' }}>Premium <span className="gradient-text">Investment Plans</span></h1>
         <p style={{ color: 'var(--text-dim)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto' }}>Select a strategic portfolio and grow your wealth with daily rewards.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '25px' }}>
         {plans.map((plan) => (
           <motion.div
             key={plan.id}
@@ -230,7 +230,7 @@ const Plans = ({ user, setUser }) => {
                   <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div>
                       <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', display: 'block', marginBottom: '8px' }}>Payment Method Used</label>
-                      <select className="glass" value={formData.method} onChange={e => setFormData({ ...formData, method: e.target.value })} style={{ width: '100%', padding: '14px', color: 'white' }}>
+                      <select className="glass" value={formData.method} onChange={e => setFormData({ ...formData, method: e.target.value })} style={{ width: '100%', padding: '14px', color: 'var(--text-main)', background: 'var(--surface)' }}>
                         <option value="easypaisa">Easypaisa</option>
                         <option value="jazzcash">JazzCash</option>
                       </select>
@@ -239,17 +239,17 @@ const Plans = ({ user, setUser }) => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                       <div>
                         <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', display: 'block', marginBottom: '8px' }}>Account Name</label>
-                        <input className="glass" placeholder="Your Name" value={formData.senderAccountName} onChange={e => setFormData({ ...formData, senderAccountName: e.target.value })} style={{ width: '100%', padding: '14px', color: 'white' }} />
+                        <input className="glass" placeholder="Your Name" value={formData.senderAccountName} onChange={e => setFormData({ ...formData, senderAccountName: e.target.value })} style={{ width: '100%', padding: '14px', color: 'var(--text-main)' }} />
                       </div>
                       <div>
                         <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', display: 'block', marginBottom: '8px' }}>Account No</label>
-                        <input className="glass" placeholder="03XXXXXXXXX" value={formData.senderAccountNo} onChange={e => setFormData({ ...formData, senderAccountNo: e.target.value })} style={{ width: '100%', padding: '14px', color: 'white' }} />
+                        <input className="glass" placeholder="03XXXXXXXXX" value={formData.senderAccountNo} onChange={e => setFormData({ ...formData, senderAccountNo: e.target.value })} style={{ width: '100%', padding: '14px', color: 'var(--text-main)' }} />
                       </div>
                     </div>
 
                     <div>
                       <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', display: 'block', marginBottom: '8px' }}>Transaction ID (TRX)</label>
-                      <input className="glass" placeholder="e.g. 192837465" value={formData.transactionId} onChange={e => setFormData({ ...formData, transactionId: e.target.value })} style={{ width: '100%', padding: '14px', color: 'white' }} />
+                      <input className="glass" placeholder="e.g. 192837465" value={formData.transactionId} onChange={e => setFormData({ ...formData, transactionId: e.target.value })} style={{ width: '100%', padding: '14px', color: 'var(--text-main)' }} />
                     </div>
 
                     <div>
@@ -303,8 +303,8 @@ const Plans = ({ user, setUser }) => {
           background: rgba(79, 172, 254, 0.05) !important;
         }
         select option {
-           background: #111;
-           color: white;
+           background: 'var(--bg-dark)';
+           color: 'var(--text-main)';
         }
       `}</style>
     </div>
