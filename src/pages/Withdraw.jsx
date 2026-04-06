@@ -3,7 +3,8 @@ import { submitWithdrawal, fetchUserWithdrawals, getCurrentUser, getSettings } f
 import { motion } from 'framer-motion';
 import { Wallet, Send } from 'lucide-react';
 
-const Withdraw = ({ user, setUser }) => {
+const Withdraw = ({ user, setUser, theme }) => {
+  const isDark = theme === 'dark';
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('JazzCash');
   const [accountNumber, setAccountNumber] = useState('');

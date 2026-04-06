@@ -95,19 +95,20 @@ function App() {
           <Route
             path="/login"
             element={
-              user
-                ? <Navigate to="/" replace />
-                : <Login onLogin={(u, isSignup) => {
+              <Login
+                user={user}
+                onLogin={(u, isSignup) => {
                   setUser(u);
-                  if (isSignup) navigate('/plans');
-                  else navigate(u.role === 'admin' ? '/admin' : '/dashboard');
-                }} />
+                  if (isSignup) navigate('/plans', { replace: true });
+                  else navigate(u.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+                }}
+              />
             }
           />
-          <Route path="/dashboard" element={user ? <Dashboard user={user} setUser={setUser} /> : <Navigate to="/login" />} />
-          <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
-          <Route path="/plans" element={user ? <Plans user={user} setUser={setUser} /> : <Navigate to="/login" />} />
-          <Route path="/withdraw" element={user ? <Withdraw user={user} setUser={setUser} /> : <Navigate to="/login" />} />
+          <Route path="/dashboard" element={user ? <Dashboard user={user} setUser={setUser} theme={theme} /> : <Navigate to="/login" />} />
+          <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard theme={theme} /> : <Navigate to="/login" />} />
+          <Route path="/plans" element={user ? <Plans user={user} setUser={setUser} theme={theme} /> : <Navigate to="/login" />} />
+          <Route path="/withdraw" element={user ? <Withdraw user={user} setUser={setUser} theme={theme} /> : <Navigate to="/login" />} />
           <Route path="/" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> : <Navigate to="/login" replace />} />
         </Routes>
       </div>

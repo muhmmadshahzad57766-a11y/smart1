@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { login, signup } from '../lib/storage';
 import { motion } from 'framer-motion';
 
-const Login = ({ onLogin }) => {
+const Login = ({ onLogin, user }) => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -10,13 +11,18 @@ const Login = ({ onLogin }) => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (user) {
+      navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
     if (ref) {
       setReferralCode(ref);
       setIsLogin(false); // Default to signup so they can register with the code
     }
-  }, []);
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

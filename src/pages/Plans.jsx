@@ -12,7 +12,8 @@ import {
   Camera
 } from 'lucide-react';
 
-const Plans = ({ user, setUser }) => {
+const Plans = ({ user, setUser, theme }) => {
+  const isDark = theme === 'dark';
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [settings, setSettings] = useState({ adminWallets: { easypaisa: {}, jazzcash: {} } });

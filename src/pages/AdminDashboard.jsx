@@ -37,7 +37,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const ITEMS_PER_PAGE = 10;
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ theme }) => {
+  const isDark = theme === 'dark';
   const [users, setUsers] = useState([]);
   const [plans, setPlans] = useState([]);
   const [investmentRequests, setInvestmentRequests] = useState([]);

@@ -16,7 +16,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-const Dashboard = ({ user, setUser }) => {
+const Dashboard = ({ user, setUser, theme }) => {
+  const isDark = theme === 'dark';
   const [settings, setSettings] = useState(null);
   const [pendingInvestment, setPendingInvestment] = useState(null);
   const [userPlan, setUserPlan] = useState(null);
