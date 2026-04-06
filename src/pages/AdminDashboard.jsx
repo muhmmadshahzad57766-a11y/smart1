@@ -313,7 +313,7 @@ const AdminDashboard = () => {
         overflowX: 'auto',
         WebkitOverflowScrolling: 'touch',
         position: 'sticky',
-        top: 'calc(var(--header-height) + 25px)',
+        top: 'calc(var(--header-height) + 30px)',
         zIndex: 900
       }}>
         {[
@@ -550,7 +550,7 @@ const AdminDashboard = () => {
                   </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '20px' }}>
                   {plans.map(plan => (
                     <div key={plan.id} className="glass" style={{ padding: '25px', borderRadius: '24px', border: '1px solid var(--glass-border)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>

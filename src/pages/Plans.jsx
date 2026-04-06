@@ -180,7 +180,7 @@ const Plans = ({ user, setUser }) => {
                 maxHeight: '90vh',
                 overflowY: 'auto',
                 borderRadius: '24px',
-                padding: window.innerWidth < 768 ? '20px' : '40px',
+                padding: 'clamp(15px, 5vw, 40px)',
                 border: '1px solid var(--glass-border)',
                 position: 'relative'
               }}
@@ -189,11 +189,7 @@ const Plans = ({ user, setUser }) => {
                 <X size={30} />
               </button>
 
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: window.innerWidth < 768 ? '1fr' : 'repeat(auto-fit, minmax(350px, 1fr))',
-                gap: window.innerWidth < 768 ? '20px' : '40px'
-              }}>
+              <div className="modal-grid">
                 {/* Left: Admin Details */}
                 <div>
                   <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '10px' }}>Step 1: Payment</h2>
@@ -236,7 +232,7 @@ const Plans = ({ user, setUser }) => {
                       </select>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div className="form-grid">
                       <div>
                         <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', display: 'block', marginBottom: '8px' }}>Account Name</label>
                         <input className="glass" placeholder="Your Name" value={formData.senderAccountName} onChange={e => setFormData({ ...formData, senderAccountName: e.target.value })} style={{ width: '100%', padding: '14px', color: 'var(--text-main)' }} />
@@ -303,8 +299,29 @@ const Plans = ({ user, setUser }) => {
           background: rgba(79, 172, 254, 0.05) !important;
         }
         select option {
-           background: 'var(--bg-dark)';
-           color: 'var(--text-main)';
+           background: var(--bg-dark);
+           color: var(--text-main);
+        }
+
+        .modal-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(clamp(280px, 45%, 400px), 1fr));
+          gap: clamp(20px, 5vw, 40px);
+        }
+
+        .form-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+          gap: 15px;
+        }
+
+        @media (max-width: 480px) {
+          .active-plan {
+            padding: 25px !important;
+          }
+           .form-grid {
+            grid-template-columns: 1fr;
+          }
         }
       `}</style>
     </div>
