@@ -8,20 +8,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const getCurrentUser = async () => {
   const userId = localStorage.getItem('current_user_id');
   if (!userId) return null;
-  const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
-  if (error || !data) return null;
+  const { data: stData } = await supabase.from('users').select('*').eq('id', userId).single();
+  if (!stData) return null;
 
-  // Format variables specifically for how the app expects them (camelCase vs snake_case)
+  const { data: request } = await supabase.from('investment_requests').select('id').eq('user_id', userId).eq('status', 'pending').limit(1).maybeSingle();
+
   return {
-    ...data,
-    investedAmount: data.invested_amount,
-    referralCode: data.referral_code,
-    referredBy: data.referred_by,
-    referralEarnings: data.referral_earnings,
-    referralCount: data.referral_count,
-    planId: data.current_plan_id,
-    planStartTime: data.plan_start_time,
-    balance: data.balance || 0
+    ...stData,
+    investedAmount: stData.invested_amount,
+    referralCode: stData.referral_code,
+    referredBy: stData.referred_by,
+    referralEarnings: stData.referral_earnings,
+    referralCount: stData.referral_count,
+    planId: stData.current_plan_id,
+    planStartTime: stData.plan_start_time,
+    balance: stData.balance || 0,
+    hasPendingInvestment: !!request
   };
 };
 
@@ -48,6 +50,8 @@ export const login = async (username, password) => {
   if (error || !data) return null;
   localStorage.setItem('current_user_id', data.id);
 
+  const { data: request } = await supabase.from('investment_requests').select('id').eq('user_id', data.id).eq('status', 'pending').limit(1).maybeSingle();
+
   return {
     ...data,
     investedAmount: data.invested_amount,
@@ -56,7 +60,8 @@ export const login = async (username, password) => {
     referralEarnings: data.referral_earnings,
     referralCount: data.referral_count,
     planId: data.current_plan_id,
-    planStartTime: data.plan_start_time
+    planStartTime: data.plan_start_time,
+    hasPendingInvestment: !!request
   };
 };
 
@@ -101,7 +106,8 @@ export const signup = async (username, password) => {
     referralEarnings: newUser.referral_earnings,
     referralCount: newUser.referral_count,
     planId: newUser.current_plan_id,
-    planStartTime: newUser.plan_start_time
+    planStartTime: newUser.plan_start_time,
+    hasPendingInvestment: false
   };
 };
 

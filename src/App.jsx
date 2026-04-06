@@ -105,11 +105,41 @@ function App() {
               />
             }
           />
-          <Route path="/dashboard" element={user ? <Dashboard user={user} setUser={setUser} theme={theme} /> : <Navigate to="/login" />} />
+          <Route
+            path="/dashboard"
+            element={
+              user
+                ? (user.role === 'admin'
+                  ? <Navigate to="/admin" replace />
+                  : (user.planId || user.hasPendingInvestment ? <Dashboard user={user} setUser={setUser} theme={theme} /> : <Navigate to="/plans" replace />)
+                )
+                : <Navigate to="/login" replace />
+            }
+          />
           <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard theme={theme} /> : <Navigate to="/login" />} />
           <Route path="/plans" element={user ? <Plans user={user} setUser={setUser} theme={theme} /> : <Navigate to="/login" />} />
-          <Route path="/withdraw" element={user ? <Withdraw user={user} setUser={setUser} theme={theme} /> : <Navigate to="/login" />} />
-          <Route path="/" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> : <Navigate to="/login" replace />} />
+          <Route
+            path="/withdraw"
+            element={
+              user
+                ? (user.role === 'admin'
+                  ? <Navigate to="/admin" replace />
+                  : (user.planId ? <Withdraw user={user} setUser={setUser} theme={theme} /> : <Navigate to="/plans" replace />)
+                )
+                : <Navigate to="/login" replace />
+            }
+          />
+          <Route
+            path="/"
+            element={
+              user
+                ? (user.role === 'admin'
+                  ? <Navigate to="/admin" replace />
+                  : (user.planId || user.hasPendingInvestment ? <Navigate to="/dashboard" replace /> : <Navigate to="/plans" replace />)
+                )
+                : <Navigate to="/login" replace />
+            }
+          />
         </Routes>
       </div>
     </div>

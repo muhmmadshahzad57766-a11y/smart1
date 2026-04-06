@@ -12,11 +12,14 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
   const navItems = user
     ? (user.role === 'admin'
       ? [{ path: '/admin', label: 'Admin', icon: <Shield size={20} /> }]
-      : [
-        { path: '/dashboard', label: 'Dashboard', icon: <Home size={20} /> },
-        { path: '/plans', label: 'Plans', icon: <PieChart size={20} /> },
-        { path: '/withdraw', label: 'Withdraw', icon: <Wallet size={20} /> },
-      ])
+      : (user.planId || user.hasPendingInvestment
+        ? [
+          { path: '/dashboard', label: 'Dashboard', icon: <Home size={20} /> },
+          { path: '/plans', label: 'Plans', icon: <PieChart size={20} /> },
+          { path: '/withdraw', label: 'Withdraw', icon: <Wallet size={20} /> },
+        ]
+        : [{ path: '/plans', label: 'Plans', icon: <PieChart size={20} /> }]
+      ))
     : [];
 
   const isActive = (path) => location.pathname === path;

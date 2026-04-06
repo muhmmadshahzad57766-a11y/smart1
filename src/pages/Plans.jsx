@@ -107,6 +107,8 @@ const Plans = ({ user, setUser, theme }) => {
       amountSent: parseInt(formData.amountSent)
     });
 
+    setUser({ ...user, hasPendingInvestment: true });
+
     setSubmitting(false);
     setShowModal(false);
     setSelectedPlan(null);
