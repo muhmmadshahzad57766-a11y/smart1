@@ -311,7 +311,10 @@ const AdminDashboard = () => {
         borderRadius: '16px',
         width: '100%',
         overflowX: 'auto',
-        WebkitOverflowScrolling: 'touch'
+        WebkitOverflowScrolling: 'touch',
+        position: 'sticky',
+        top: 'calc(var(--header-height) + 25px)',
+        zIndex: 900
       }}>
         {[
           { id: 'users', label: 'Users', icon: Users },
@@ -540,9 +543,9 @@ const AdminDashboard = () => {
 
             {activeTab === 'plans' && (
               <motion.div key="plans" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
                   <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Investment Strategies</h3>
-                  <button onClick={() => setShowAddPlan(true)} className="gradient-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button onClick={() => setShowAddPlan(true)} className="gradient-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', width: 'clamp(140px, 100%, 180px)', justifyContent: 'center' }}>
                     <Plus size={18} /> New Plan
                   </button>
                 </div>
@@ -561,7 +564,7 @@ const AdminDashboard = () => {
                         </button>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '20px' }}>
                         <div>
                           <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Price (PKR)</label>
                           <input
