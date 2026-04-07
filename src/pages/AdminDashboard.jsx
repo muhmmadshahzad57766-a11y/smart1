@@ -375,6 +375,7 @@ const AdminDashboard = ({ theme }) => {
                         <th>Plan ID</th>
                         <th>Balance</th>
                         <th>Invested</th>
+                        <th>Daily ROI</th>
                         <th>Join Date</th>
                         <th style={{ textAlign: 'right' }}>Action</th>
                       </tr>
@@ -386,6 +387,7 @@ const AdminDashboard = ({ theme }) => {
                           <td>{u.planId ? <span className="badge badge-info">{u.planId}</span> : 'None'}</td>
                           <td>PKR {(Number(u.balance) || 0).toLocaleString()}</td>
                           <td>PKR {(Number(u.investedAmount) || 0).toLocaleString()}</td>
+                          <td style={{ color: 'var(--accent-green)', fontWeight: 600 }}>PKR {(Number(u.dailyReward) || 0).toLocaleString()}</td>
                           <td>{formatDate(u.createdAt)}</td>
                           <td style={{ textAlign: 'right' }}>
                             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>

@@ -13,6 +13,12 @@ export const getCurrentUser = async () => {
 
   const { data: request } = await supabase.from('investment_requests').select('id').eq('user_id', userId).eq('status', 'pending').limit(1).maybeSingle();
 
+  // Calculate total daily reward
+  const { data: approvedRequests } = await supabase.from('investment_requests').select('plan_id').eq('user_id', userId).eq('status', 'approved');
+  const { data: plans } = await supabase.from('plans').select('id, daily_reward');
+  const planMap = new Map(plans?.map(p => [p.id, p.daily_reward]) || []);
+  const totalDailyReward = approvedRequests?.reduce((sum, req) => sum + Number(planMap.get(req.plan_id) || 0), 0) || 0;
+
   return {
     ...stData,
     investedAmount: stData.invested_amount,
@@ -23,6 +29,7 @@ export const getCurrentUser = async () => {
     planId: stData.current_plan_id,
     planStartTime: stData.plan_start_time,
     balance: stData.balance || 0,
+    dailyReward: totalDailyReward,
     hasPendingInvestment: !!request
   };
 };
@@ -52,6 +59,12 @@ export const login = async (username, password) => {
 
   const { data: request } = await supabase.from('investment_requests').select('id').eq('user_id', data.id).eq('status', 'pending').limit(1).maybeSingle();
 
+  // Calculate total daily reward
+  const { data: approvedRequests } = await supabase.from('investment_requests').select('plan_id').eq('user_id', data.id).eq('status', 'approved');
+  const { data: plans } = await supabase.from('plans').select('id, daily_reward');
+  const planMap = new Map(plans?.map(p => [p.id, p.daily_reward]) || []);
+  const totalDailyReward = approvedRequests?.reduce((sum, req) => sum + Number(planMap.get(req.plan_id) || 0), 0) || 0;
+
   return {
     ...data,
     investedAmount: data.invested_amount,
@@ -61,6 +74,7 @@ export const login = async (username, password) => {
     referralCount: data.referral_count,
     planId: data.current_plan_id,
     planStartTime: data.plan_start_time,
+    dailyReward: totalDailyReward,
     hasPendingInvestment: !!request
   };
 };
@@ -253,6 +267,9 @@ export const handleInvestmentRequest = async (requestId, status) => {
   const { data: request } = await supabase.from('investment_requests').update({ status }).eq('id', requestId).select().single();
 
   if (status === 'approved' && request) {
+    // Before approving a new plan, calculate rewards for the old one to avoid loss
+    await calculateRewards(request.user_id);
+
     const { data: plan } = await supabase.from('plans').select('*').eq('id', request.plan_id).single();
     if (plan) {
       // Reward referrer logic
@@ -340,12 +357,21 @@ export const handleWithdrawal = async (withdrawId, status) => {
 };
 
 export const calculateRewards = async (userId) => {
-  // Check user and plan
+  // Check user
   const { data: user } = await supabase.from('users').select('*').eq('id', userId).single();
-  if (!user || !user.current_plan_id) return null;
+  if (!user) return null;
 
-  const { data: plan } = await supabase.from('plans').select('*').eq('id', user.current_plan_id).single();
-  if (!plan) return null;
+  // Fetch all approved plans to calculate cumulative daily reward
+  const { data: approvedRequests } = await supabase.from('investment_requests').select('plan_id').eq('user_id', userId).eq('status', 'approved');
+
+  if (!approvedRequests || approvedRequests.length === 0) return null;
+
+  const { data: plans } = await supabase.from('plans').select('*');
+  const planMap = new Map(plans.map(p => [p.id, p.daily_reward]));
+
+  const totalDailyReward = approvedRequests.reduce((sum, req) => sum + Number(planMap.get(req.plan_id) || 0), 0);
+
+  if (totalDailyReward <= 0) return null;
 
   // Retrieve last reward timestamp. If none, use plan_start_time
   const { data: lastReward } = await supabase.from('rewards')
@@ -361,14 +387,14 @@ export const calculateRewards = async (userId) => {
 
   const daysPassed = Math.floor((now - lastRewardTime) / msInDay);
   if (daysPassed > 0) {
-    const totalNewReward = daysPassed * Number(plan.daily_reward);
+    const totalNewReward = daysPassed * totalDailyReward;
 
     // Add rewards to table
     const inserts = [];
     for (let i = 0; i < daysPassed; i++) {
       inserts.push({
         user_id: userId,
-        amount: Number(plan.daily_reward),
+        amount: totalDailyReward, // Log the total cumulative reward as one entry or daily entries
         timestamp: new Date(lastRewardTime + msInDay * (i + 1)).toISOString()
       });
     }
@@ -385,8 +411,20 @@ export const calculateRewards = async (userId) => {
 };
 
 export const fetchAllUsers = async () => {
-  const { data } = await supabase.from('users').select('*');
-  return data?.map(u => ({
+  const { data: users } = await supabase.from('users').select('*');
+  const { data: approvedRequests } = await supabase.from('investment_requests').select('user_id, plan_id').eq('status', 'approved');
+  const { data: plans } = await supabase.from('plans').select('id, daily_reward');
+
+  const planMap = new Map(plans?.map(p => [p.id, p.daily_reward]) || []);
+
+  // Group rewards by user
+  const userRewardsMap = new Map();
+  approvedRequests?.forEach(req => {
+    const reward = Number(planMap.get(req.plan_id) || 0);
+    userRewardsMap.set(req.user_id, (userRewardsMap.get(req.user_id) || 0) + reward);
+  });
+
+  return users?.map(u => ({
     ...u,
     investedAmount: u.invested_amount,
     referralCode: u.referral_code,
@@ -394,6 +432,7 @@ export const fetchAllUsers = async () => {
     referralEarnings: u.referral_earnings,
     referralCount: u.referral_count,
     planId: u.current_plan_id,
+    dailyReward: userRewardsMap.get(u.id) || 0,
     createdAt: u.created_at
   })) || [];
 };

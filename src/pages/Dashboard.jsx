@@ -64,8 +64,7 @@ const Dashboard = ({ user, setUser, theme }) => {
   };
 
   const stats = useMemo(() => {
-    if (!userPlan) return { rewardPercent: 0, totalEarned: 0 };
-    const rewardPercent = ((userPlan.dailyReward / userPlan.price) * 100).toFixed(1);
+    const rewardPercent = userPlan ? ((userPlan.dailyReward / userPlan.price) * 100).toFixed(1) : 0;
     const totalEarned = userRewards.reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
     return { rewardPercent, totalEarned };
   }, [userPlan, userRewards]);
@@ -230,7 +229,7 @@ const Dashboard = ({ user, setUser, theme }) => {
           <h3 style={{ fontSize: '2rem', fontWeight: 800 }}>PKR {(stats.totalEarned || 0).toLocaleString()}</h3>
           <div style={{ marginTop: '20px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
             <div style={{ padding: '8px 15px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', fontSize: '0.8rem' }}>
-              <span style={{ color: 'var(--text-dim)' }}>Daily:</span> <b style={{ color: 'var(--primary)' }}>PKR {userPlan ? userPlan.dailyReward : 0}</b>
+              <span style={{ color: 'var(--text-dim)' }}>Daily:</span> <b style={{ color: 'var(--primary)' }}>PKR {(Number(user.dailyReward) || 0).toLocaleString()}</b>
             </div>
             <div style={{ padding: '8px 15px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', fontSize: '0.8rem' }}>
               <span style={{ color: 'var(--text-dim)' }}>Ref:</span> <b style={{ color: 'var(--secondary)' }}>PKR {(Number(user.referralEarnings) || 0).toLocaleString()}</b>
