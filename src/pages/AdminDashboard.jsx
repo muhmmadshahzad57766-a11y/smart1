@@ -96,7 +96,7 @@ const AdminDashboard = ({ theme }) => {
 
   // New Plan State
   const [showAddPlan, setShowAddPlan] = useState(false);
-  const [newPlan, setNewPlan] = useState({ name: '', price: '', dailyReward: '' });
+  const [newPlan, setNewPlan] = useState({ name: '', price: '', percentage: '', dailyReward: '' });
 
   // Stats Calculations
   const stats = useMemo(() => {
@@ -148,7 +148,7 @@ const AdminDashboard = ({ theme }) => {
       dailyReward: parseInt(newPlan.dailyReward)
     });
     setShowAddPlan(false);
-    setNewPlan({ name: '', price: '', dailyReward: '' });
+    setNewPlan({ name: '', price: '', percentage: '', dailyReward: '' });
     refreshData();
   };
 
@@ -160,7 +160,20 @@ const AdminDashboard = ({ theme }) => {
   };
 
   const handleUpdatePlanField = async (id, field, value) => {
-    await updatePlan(id, { [field]: field === 'name' ? value : parseInt(value) });
+    const plan = plans.find(p => p.id === id);
+    if (!plan) return;
+
+    let updates = { [field]: field === 'name' ? value : parseFloat(value) || 0 };
+
+    // Auto-calculate dailyReward if price or percentage changes
+    if (field === 'price' || field === 'percentage') {
+      const price = field === 'price' ? parseFloat(value) : plan.price;
+      const percentage = field === 'percentage' ? parseFloat(value) : (plan.percentage || ((plan.dailyReward / plan.price) * 100));
+      updates.dailyReward = Math.round((price * percentage) / 100);
+      updates.percentage = percentage;
+    }
+
+    await updatePlan(id, updates);
     refreshData();
   };
 
@@ -579,6 +592,16 @@ const AdminDashboard = ({ theme }) => {
                           />
                         </div>
                         <div>
+                          <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Percentage (%)</label>
+                          <input
+                            type="number"
+                            className="glass"
+                            value={plan.percentage || Math.round((plan.dailyReward / plan.price) * 100)}
+                            onChange={(e) => handleUpdatePlanField(plan.id, 'percentage', e.target.value)}
+                            style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
+                          />
+                        </div>
+                        <div>
                           <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Daily Reward (PKR)</label>
                           <input
                             type="number"
@@ -751,8 +774,46 @@ const AdminDashboard = ({ theme }) => {
             <h2 style={{ marginBottom: '25px' }}>Create New Plan</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <input className="glass" placeholder="Plan Name (e.g. Starter)" value={newPlan.name} onChange={e => setNewPlan({ ...newPlan, name: e.target.value })} style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }} />
-              <input className="glass" type="number" placeholder="Price (PKR)" value={newPlan.price} onChange={e => setNewPlan({ ...newPlan, price: e.target.value })} style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }} />
-              <input className="glass" type="number" placeholder="Daily Reward (PKR)" value={newPlan.dailyReward} onChange={e => setNewPlan({ ...newPlan, dailyReward: e.target.value })} style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }} />
+              <input
+                className="glass"
+                type="number"
+                placeholder="Price (PKR)"
+                value={newPlan.price}
+                onChange={e => {
+                  const price = parseFloat(e.target.value) || 0;
+                  const percentage = parseFloat(newPlan.percentage) || 0;
+                  setNewPlan({
+                    ...newPlan,
+                    price: e.target.value,
+                    dailyReward: Math.round((price * percentage) / 100)
+                  });
+                }}
+                style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }}
+              />
+              <input
+                className="glass"
+                type="number"
+                placeholder="Percentage (%)"
+                value={newPlan.percentage}
+                onChange={e => {
+                  const percentage = parseFloat(e.target.value) || 0;
+                  const price = parseFloat(newPlan.price) || 0;
+                  setNewPlan({
+                    ...newPlan,
+                    percentage: e.target.value,
+                    dailyReward: Math.round((price * percentage) / 100)
+                  });
+                }}
+                style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }}
+              />
+              <input
+                className="glass"
+                type="number"
+                placeholder="Daily Reward (PKR)"
+                value={newPlan.dailyReward}
+                onChange={e => setNewPlan({ ...newPlan, dailyReward: e.target.value })}
+                style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }}
+              />
               <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
                 <button onClick={handleAddPlan} className="gradient-btn" style={{ flex: 1 }}>Create</button>
                 <button onClick={() => setShowAddPlan(false)} className="glass" style={{ flex: 1, color: 'var(--text-main)' }}>Cancel</button>
