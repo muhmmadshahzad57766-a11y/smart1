@@ -45,6 +45,7 @@ const AdminDashboard = ({ theme }) => {
   const [withdrawalRequests, setWithdrawalRequests] = useState([]);
   const [settings, setSettings] = useState({ adminWallets: { easypaisa: {}, jazzcash: {} } });
   const [loading, setLoading] = useState(true);
+  const [dirtyPlans, setDirtyPlans] = useState({}); // { planId: { updates } }
 
   const [activeTab, setActiveTab] = useState('users');
   const [searchTerm, setSearchTerm] = useState('');
@@ -142,6 +143,8 @@ const AdminDashboard = ({ theme }) => {
 
   const handleAddPlan = async () => {
     if (!newPlan.name || !newPlan.price || !newPlan.dailyReward) return;
+    if (!window.confirm(`Are you sure you want to create the plan "${newPlan.name}"?`)) return;
+
     await addPlan({
       name: newPlan.name,
       price: parseInt(newPlan.price),
@@ -159,22 +162,42 @@ const AdminDashboard = ({ theme }) => {
     }
   };
 
-  const handleUpdatePlanField = async (id, field, value) => {
+  const handleUpdatePlanField = (id, field, value) => {
     const plan = plans.find(p => p.id === id);
     if (!plan) return;
 
-    let updates = { [field]: field === 'name' ? value : parseFloat(value) || 0 };
+    const currentUpdates = dirtyPlans[id] || {};
+    let newUpdates = { ...currentUpdates, [field]: field === 'name' ? value : parseFloat(value) || 0 };
 
-    // Auto-calculate dailyReward if price or percentage changes
+    // Auto-calculate dailyReward if price or percentage changes in the local edit
     if (field === 'price' || field === 'percentage') {
-      const price = field === 'price' ? parseFloat(value) : plan.price;
-      const percentage = field === 'percentage' ? parseFloat(value) : (plan.percentage || ((plan.dailyReward / plan.price) * 100));
-      updates.dailyReward = Math.round((price * percentage) / 100);
-      updates.percentage = percentage;
+      const price = field === 'price' ? parseFloat(value) : (newUpdates.price || plan.price);
+      const percentage = field === 'percentage' ? parseFloat(value) : (newUpdates.percentage || (plan.percentage || ((plan.dailyReward / plan.price) * 100)));
+      newUpdates.dailyReward = Math.round((price * percentage) / 100);
+      newUpdates.percentage = percentage;
     }
 
-    await updatePlan(id, updates);
-    refreshData();
+    setDirtyPlans({ ...dirtyPlans, [id]: newUpdates });
+  };
+
+  const handleSavePlan = async (id) => {
+    const updates = dirtyPlans[id];
+    if (!updates) return;
+
+    if (window.confirm("Are you sure you want to save the changes to this plan?")) {
+      await updatePlan(id, updates);
+      const newDirty = { ...dirtyPlans };
+      delete newDirty[id];
+      setDirtyPlans(newDirty);
+      refreshData();
+      alert("Plan updated successfully!");
+    }
+  };
+
+  const handleCancelEdit = (id) => {
+    const newDirty = { ...dirtyPlans };
+    delete newDirty[id];
+    setDirtyPlans(newDirty);
   };
 
   const handleUpdateUser = async () => {
@@ -567,53 +590,77 @@ const AdminDashboard = ({ theme }) => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '20px' }}>
-                  {plans.map(plan => (
-                    <div key={plan.id} className="glass" style={{ padding: '25px', borderRadius: '24px', border: '1px solid var(--glass-border)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                        <input
-                          value={plan.name}
-                          onChange={(e) => handleUpdatePlanField(plan.id, 'name', e.target.value)}
-                          style={{ background: 'none', border: 'none', color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: 700, width: '70%' }}
-                        />
-                        <button onClick={() => handleDeletePlan(plan.id)} style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer' }}>
-                          <Trash2 size={20} />
-                        </button>
-                      </div>
+                  {plans.map(plan => {
+                    const updates = dirtyPlans[plan.id] || {};
+                    const isDirty = Object.keys(updates).length > 0;
 
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '20px' }}>
-                        <div>
-                          <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Price (PKR)</label>
+                    return (
+                      <div key={plan.id} className="glass" style={{ padding: '25px', borderRadius: '24px', border: isDirty ? '1px solid var(--primary)' : '1px solid var(--glass-border)', transition: 'all 0.3s ease' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                           <input
-                            type="number"
-                            className="glass"
-                            value={plan.price}
-                            onChange={(e) => handleUpdatePlanField(plan.id, 'price', e.target.value)}
-                            style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
+                            value={updates.name !== undefined ? updates.name : plan.name}
+                            onChange={(e) => handleUpdatePlanField(plan.id, 'name', e.target.value)}
+                            style={{ background: 'none', border: 'none', color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: 700, width: '70%' }}
                           />
+                          <button onClick={() => handleDeletePlan(plan.id)} style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer' }}>
+                            <Trash2 size={20} />
+                          </button>
                         </div>
-                        <div>
-                          <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Percentage (%)</label>
-                          <input
-                            type="number"
-                            className="glass"
-                            value={plan.percentage || Math.round((plan.dailyReward / plan.price) * 100)}
-                            onChange={(e) => handleUpdatePlanField(plan.id, 'percentage', e.target.value)}
-                            style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
-                          />
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '20px' }}>
+                          <div>
+                            <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Price (PKR)</label>
+                            <input
+                              type="number"
+                              className="glass"
+                              value={updates.price !== undefined ? updates.price : plan.price}
+                              onChange={(e) => handleUpdatePlanField(plan.id, 'price', e.target.value)}
+                              style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Percentage (%)</label>
+                            <input
+                              type="number"
+                              className="glass"
+                              value={updates.percentage !== undefined ? updates.percentage : (plan.percentage || Math.round((plan.dailyReward / plan.price) * 100))}
+                              onChange={(e) => handleUpdatePlanField(plan.id, 'percentage', e.target.value)}
+                              style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Daily Reward (PKR)</label>
+                            <input
+                              type="number"
+                              className="glass"
+                              value={updates.dailyReward !== undefined ? updates.dailyReward : plan.dailyReward}
+                              onChange={(e) => handleUpdatePlanField(plan.id, 'dailyReward', e.target.value)}
+                              style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Daily Reward (PKR)</label>
-                          <input
-                            type="number"
-                            className="glass"
-                            value={plan.dailyReward}
-                            onChange={(e) => handleUpdatePlanField(plan.id, 'dailyReward', e.target.value)}
-                            style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
-                          />
-                        </div>
+
+                        {isDirty && (
+                          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                            <button
+                              onClick={() => handleSavePlan(plan.id)}
+                              className="gradient-btn"
+                              style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }}
+                            >
+                              Save Changes
+                            </button>
+                            <button
+                              onClick={() => handleCancelEdit(plan.id)}
+                              className="glass"
+                              style={{ flex: 1, padding: '8px', fontSize: '0.85rem', color: 'var(--text-dim)' }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </motion.div>
             )}
