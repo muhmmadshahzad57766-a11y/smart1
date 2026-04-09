@@ -192,7 +192,6 @@ export const fetchPlans = async () => {
     id: p.id,
     name: p.name,
     price: p.price,
-    percentage: p.percentage,
     dailyReward: p.daily_reward,
     createdAt: p.created_at
   })) || [];
@@ -202,7 +201,6 @@ export const addPlan = async (planData) => {
   const { data } = await supabase.from('plans').insert([{
     name: planData.name,
     price: planData.price,
-    percentage: planData.percentage,
     daily_reward: planData.dailyReward
   }]).select('*');
   // Return all plans like the old mock did
@@ -218,7 +216,6 @@ export const updatePlan = async (id, updates) => {
   const payload = {};
   if (updates.name !== undefined) payload.name = updates.name;
   if (updates.price !== undefined) payload.price = updates.price;
-  if (updates.percentage !== undefined) payload.percentage = updates.percentage;
   if (updates.dailyReward !== undefined) payload.daily_reward = updates.dailyReward;
 
   const { data } = await supabase.from('plans').update(payload).eq('id', id).select().single();
