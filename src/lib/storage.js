@@ -104,7 +104,8 @@ export const signup = async (username, password) => {
     password,
     role: 'user',
     referral_code: referralCode,
-    referred_by: referredBy
+    referred_by: referredBy,
+    plan_start_time: new Date().toISOString()
   }]).select().single();
 
   localStorage.removeItem('signup_referral_code');
@@ -381,9 +382,15 @@ export const calculateRewards = async (userId) => {
     .limit(1)
     .maybeSingle();
 
-  const lastRewardTime = lastReward ? new Date(lastReward.timestamp).getTime() : new Date(user.plan_start_time).getTime();
+  const planStartTimeRaw = user.plan_start_time;
+  if (!planStartTimeRaw || planStartTimeRaw.startsWith('1970')) return null;
+
+  const lastRewardTime = lastReward ? new Date(lastReward.timestamp).getTime() : new Date(planStartTimeRaw).getTime();
   const now = Date.now();
   const msInDay = 24 * 60 * 60 * 1000;
+
+  // Safety check for NaN or invalid dates
+  if (isNaN(lastRewardTime)) return null;
 
   const daysPassed = Math.floor((now - lastRewardTime) / msInDay);
   if (daysPassed > 0) {
@@ -394,7 +401,7 @@ export const calculateRewards = async (userId) => {
     for (let i = 0; i < daysPassed; i++) {
       inserts.push({
         user_id: userId,
-        amount: totalDailyReward, // Log the total cumulative reward as one entry or daily entries
+        amount: totalDailyReward,
         timestamp: new Date(lastRewardTime + msInDay * (i + 1)).toISOString()
       });
     }
@@ -408,6 +415,66 @@ export const calculateRewards = async (userId) => {
     return await getCurrentUser();
   }
   return null;
+};
+
+// --- SUPPORT SYSTEM FUNCTIONS ---
+
+export const fetchSupportMessages = async (userId) => {
+  const { data, error } = await supabase
+    .from('support_messages')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
+  return data || [];
+};
+
+export const sendSupportMessage = async (userId, senderType, content) => {
+  const { data, error } = await supabase
+    .from('support_messages')
+    .insert([{
+      user_id: userId,
+      sender_type: senderType, // 'user' or 'admin'
+      content,
+      is_read: false
+    }]).select().single();
+  return data;
+};
+
+export const fetchAllSupportConversations = async () => {
+  const { data, error } = await supabase
+    .from('support_messages')
+    .select('user_id, users(username), created_at, content, sender_type, is_read')
+    .order('created_at', { ascending: false });
+
+  if (error) return [];
+
+  // Group by user
+  const groups = {};
+  data.forEach(msg => {
+    if (!groups[msg.user_id]) {
+      groups[msg.user_id] = {
+        userId: msg.user_id,
+        username: msg.users?.username || 'Unknown',
+        lastMessage: msg.content,
+        lastTimestamp: msg.created_at,
+        unreadCount: 0
+      };
+    }
+    if (!msg.is_read && msg.sender_type === 'user') {
+      groups[msg.user_id].unreadCount++;
+    }
+  });
+
+  return Object.values(groups);
+};
+
+export const markSupportMessagesAsRead = async (userId, role) => {
+  const senderTypeToMark = role === 'admin' ? 'user' : 'admin';
+  await supabase
+    .from('support_messages')
+    .update({ is_read: true })
+    .eq('user_id', userId)
+    .eq('sender_type', senderTypeToMark);
 };
 
 export const fetchAllUsers = async () => {

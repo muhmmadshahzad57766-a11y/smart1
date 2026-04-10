@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Plans from './pages/Plans';
 import Withdraw from './pages/Withdraw';
+import SupportChat from './components/SupportChat';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -116,8 +117,7 @@ function App() {
               user
                 ? (user.role === 'admin'
                   ? <Navigate to="/admin" replace />
-                  : (user.planId || user.hasPendingInvestment ? <Dashboard user={user} setUser={setUser} theme={theme} /> : <Navigate to="/plans" replace />)
-                )
+                  : <Dashboard user={user} setUser={setUser} theme={theme} />)
                 : <Navigate to="/login" replace />
             }
           />
@@ -129,8 +129,7 @@ function App() {
               user
                 ? (user.role === 'admin'
                   ? <Navigate to="/admin" replace />
-                  : (user.planId ? <Withdraw user={user} setUser={setUser} theme={theme} /> : <Navigate to="/plans" replace />)
-                )
+                  : <Withdraw user={user} setUser={setUser} theme={theme} />)
                 : <Navigate to="/login" replace />
             }
           />
@@ -140,13 +139,14 @@ function App() {
               user
                 ? (user.role === 'admin'
                   ? <Navigate to="/admin" replace />
-                  : (user.planId || user.hasPendingInvestment ? <Navigate to="/dashboard" replace /> : <Navigate to="/plans" replace />)
-                )
+                  : <Dashboard user={user} setUser={setUser} theme={theme} />)
                 : <Navigate to="/login" replace />
             }
           />
         </Routes>
       </div>
+
+      <SupportChat user={user} theme={theme} />
     </div>
   );
 }

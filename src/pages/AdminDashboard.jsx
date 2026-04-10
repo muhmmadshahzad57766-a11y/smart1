@@ -12,7 +12,11 @@ import {
   updateSettings,
   handleWithdrawal,
   updateUserData,
-  deleteUser
+  deleteUser,
+  fetchAllSupportConversations,
+  fetchSupportMessages,
+  sendSupportMessage,
+  markSupportMessagesAsRead
 } from '../lib/storage';
 import {
   Users,
@@ -31,7 +35,9 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
-  Edit
+  Edit,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -50,6 +56,12 @@ const AdminDashboard = ({ theme }) => {
   const [activeTab, setActiveTab] = useState('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewScreenshot, setViewScreenshot] = useState(null);
+
+  // Support states
+  const [supportConversations, setSupportConversations] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null); // { userId, username }
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
 
   // Pagination states
   const [userPage, setUserPage] = useState(1);
@@ -82,6 +94,7 @@ const AdminDashboard = ({ theme }) => {
       setUsers(u);
       setWithdrawalRequests(w);
       setInvestmentRequests(i);
+      setSupportConversations(await fetchAllSupportConversations());
     } catch (e) {
       console.error(e);
     }
@@ -90,7 +103,31 @@ const AdminDashboard = ({ theme }) => {
 
   useEffect(() => {
     refreshData();
+    const interval = setInterval(() => {
+      if (activeTab === 'support') refreshSupportData();
+      else refreshUnreadCount();
+    }, 5000);
+    return () => clearInterval(interval);
   }, [activeTab]);
+
+  const refreshSupportData = async () => {
+    setSupportConversations(await fetchAllSupportConversations());
+    if (selectedChat) {
+      const msgs = await fetchSupportMessages(selectedChat.userId);
+      setChatMessages(msgs);
+    }
+  };
+
+  const refreshUnreadCount = async () => {
+    setSupportConversations(await fetchAllSupportConversations());
+  };
+
+  useEffect(() => {
+    if (selectedChat) {
+      refreshSupportData();
+      markSupportMessagesAsRead(selectedChat.userId, 'admin');
+    }
+  }, [selectedChat]);
 
   // Edit User State
   const [editUserModal, setEditUserModal] = useState(null);
@@ -246,6 +283,17 @@ const AdminDashboard = ({ theme }) => {
     refreshData();
   };
 
+  const handleSendReply = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim() || !selectedChat) return;
+    const res = await sendSupportMessage(selectedChat.userId, 'admin', chatInput);
+    if (res) {
+      setChatMessages([...chatMessages, res]);
+      setChatInput('');
+      refreshSupportData();
+    }
+  };
+
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
     try {
@@ -358,6 +406,7 @@ const AdminDashboard = ({ theme }) => {
           { id: 'investments', label: 'Payments', icon: DollarSign },
           { id: 'withdrawals', label: 'Withdraws', icon: Download },
           { id: 'plans', label: 'Plans', icon: Briefcase },
+          { id: 'support', label: 'Support', icon: MessageSquare, badge: supportConversations.reduce((acc, c) => acc + c.unreadCount, 0) },
           { id: 'settings', label: 'Config', icon: Palette }
         ].map(tab => (
           <button
@@ -380,6 +429,9 @@ const AdminDashboard = ({ theme }) => {
             }}
           >
             <tab.icon size={16} /> {tab.label}
+            {tab.badge > 0 && (
+              <span style={{ padding: '2px 6px', background: 'var(--accent-red)', color: 'white', borderRadius: '10px', fontSize: '0.7rem' }}>{tab.badge}</span>
+            )}
           </button>
         ))}
       </div>
@@ -661,6 +713,85 @@ const AdminDashboard = ({ theme }) => {
                       </div>
                     );
                   })}
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'support' && (
+              <motion.div key="support" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ height: '600px', display: 'flex', gap: '20px' }}>
+                {/* User List */}
+                <div className="glass" style={{ width: '300px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <div style={{ padding: '20px', borderBottom: '1px solid var(--glass-border)', fontWeight: 700 }}>Conversations</div>
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
+                    {supportConversations.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-dim)', fontSize: '0.85rem' }}>No conversations yet.</div>
+                    ) : (
+                      supportConversations.map(conv => (
+                        <div
+                          key={conv.userId}
+                          onClick={() => setSelectedChat({ userId: conv.userId, username: conv.username })}
+                          style={{
+                            padding: '12px',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            background: selectedChat?.userId === conv.userId ? 'rgba(79, 172, 254, 0.1)' : 'transparent',
+                            marginBottom: '8px',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{conv.username}</div>
+                            {conv.unreadCount > 0 && <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>{conv.unreadCount}</span>}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conv.lastMessage}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Chat Window */}
+                <div className="glass" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  {selectedChat ? (
+                    <>
+                      <div style={{ padding: '20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontWeight: 700 }}>Chatting with: <span className="gradient-text">{selectedChat.username}</span></div>
+                      </div>
+                      <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px', background: 'rgba(0,0,0,0.2)' }}>
+                        {chatMessages.map((msg, i) => (
+                          <div key={i} style={{ alignSelf: msg.sender_type === 'admin' ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
+                            <div style={{
+                              padding: '10px 15px',
+                              borderRadius: '12px',
+                              background: msg.sender_type === 'admin' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                              color: msg.sender_type === 'admin' ? 'black' : 'var(--text-main)',
+                              fontSize: '0.9rem',
+                              border: msg.sender_type === 'admin' ? 'none' : '1px solid var(--glass-border)'
+                            }}>
+                              {msg.content}
+                            </div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginTop: '4px', textAlign: msg.sender_type === 'admin' ? 'right' : 'left' }}>
+                              {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <form onSubmit={handleSendReply} style={{ padding: '15px', display: 'flex', gap: '10px', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid var(--glass-border)' }}>
+                        <input
+                          className="glass"
+                          value={chatInput}
+                          onChange={e => setChatInput(e.target.value)}
+                          placeholder="Type your reply..."
+                          style={{ flex: 1, padding: '10px 15px', color: 'var(--text-main)', borderRadius: '10px' }}
+                        />
+                        <button type="submit" className="gradient-btn" style={{ padding: '10px 20px', borderRadius: '10px' }}><Send size={18} /></button>
+                      </form>
+                    </>
+                  ) : (
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)' }}>
+                      Select a conversation to start chatting
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
