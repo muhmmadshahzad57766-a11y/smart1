@@ -105,40 +105,55 @@ const SupportChat = ({ user, theme }) => {
                         initial={{ opacity: 0, y: 50, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 50, scale: 0.9 }}
-                        className="glass"
                         style={{
                             position: 'fixed',
                             bottom: '100px',
                             right: '30px',
-                            width: 'clamp(300px, 90vw, 380px)',
-                            height: '500px',
+                            width: 'clamp(300px, 90vw, 400px)',
+                            height: '550px',
                             zIndex: 1000,
                             display: 'flex',
                             flexDirection: 'column',
                             overflow: 'hidden',
-                            borderRadius: '24px',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-                            border: '1px solid var(--glass-border)'
+                            borderRadius: '28px',
+                            border: '1px solid var(--glass-border)',
+                            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                            backdropFilter: 'blur(20px)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                         }}
                     >
                         {/* Header */}
                         <div style={{
-                            padding: '20px',
+                            padding: '24px',
                             background: 'var(--gradient-primary)',
                             color: 'black',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '12px'
+                            gap: '15px'
                         }}>
-                            <div style={{ padding: '8px', background: 'rgba(0,0,0,0.1)', borderRadius: '12px' }}>
-                                <Shield size={20} />
+                            <div style={{ padding: '10px', background: 'rgba(0,0,0,0.1)', borderRadius: '15px' }}>
+                                <Shield size={22} />
                             </div>
                             <div style={{ flex: 1 }}>
-                                <div style={{ fontWeight: 800, fontSize: '1rem' }}>Support Center</div>
-                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>We're online to help you</div>
+                                <div style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>Support Center</div>
+                                <div style={{ fontSize: '0.8rem', opacity: 0.8, fontWeight: 500 }}>Online • Precision Support</div>
                             </div>
-                            <button onClick={toggleChat} style={{ background: 'none', border: 'none', color: 'black', cursor: 'pointer' }}>
-                                <X size={20} />
+                            <button
+                                onClick={toggleChat}
+                                style={{
+                                    background: 'rgba(0,0,0,0.05)',
+                                    border: 'none',
+                                    color: 'black',
+                                    cursor: 'pointer',
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '10px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                <X size={18} />
                             </button>
                         </div>
 
@@ -147,25 +162,37 @@ const SupportChat = ({ user, theme }) => {
                             ref={scrollRef}
                             style={{
                                 flex: 1,
-                                padding: '20px',
+                                padding: '25px',
                                 overflowY: 'auto',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: '12px',
-                                background: 'rgba(0,0,0,0.2)'
+                                gap: '16px',
+                                background: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)'
                             }}
                         >
                             {messages.length === 0 ? (
-                                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-dim)' }}>
-                                    <MessageCircle size={40} style={{ opacity: 0.2, marginBottom: '15px' }} />
-                                    <p style={{ fontSize: '0.9rem' }}>How can we help you today? Send us a message!</p>
+                                <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-dim)' }}>
+                                    <div style={{
+                                        width: '70px',
+                                        height: '70px',
+                                        borderRadius: '50%',
+                                        background: 'rgba(79, 172, 254, 0.1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        margin: '0 auto 20px'
+                                    }}>
+                                        <MessageCircle size={32} style={{ color: 'var(--primary)' }} />
+                                    </div>
+                                    <p style={{ fontSize: '0.95rem', fontWeight: 500, color: 'var(--text-main)' }}>How can we help you?</p>
+                                    <p style={{ fontSize: '0.85rem', marginTop: '5px' }}>Our specialists are ready to assist you.</p>
                                 </div>
                             ) : (
                                 messages.map((msg, i) => (
                                     <div
                                         key={i}
                                         style={{
-                                            maxWidth: '80%',
+                                            maxWidth: '85%',
                                             alignSelf: msg.sender_type === 'user' ? 'flex-end' : 'flex-start',
                                             display: 'flex',
                                             flexDirection: 'column',
@@ -173,17 +200,19 @@ const SupportChat = ({ user, theme }) => {
                                         }}
                                     >
                                         <div style={{
-                                            padding: '12px 16px',
-                                            borderRadius: msg.sender_type === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                                            background: msg.sender_type === 'user' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                                            padding: '12px 18px',
+                                            borderRadius: msg.sender_type === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                                            background: msg.sender_type === 'user' ? 'var(--primary)' : (isDark ? 'rgba(255,255,255,0.05)' : 'white'),
                                             color: msg.sender_type === 'user' ? 'black' : 'var(--text-main)',
-                                            fontSize: '0.9rem',
+                                            fontSize: '0.92rem',
+                                            lineHeight: '1.5',
                                             fontWeight: 500,
+                                            boxShadow: msg.sender_type === 'user' ? '0 4px 15px var(--primary-glow)' : '0 4px 15px rgba(0,0,0,0.1)',
                                             border: msg.sender_type === 'user' ? 'none' : '1px solid var(--glass-border)'
                                         }}>
                                             {msg.content}
                                         </div>
-                                        <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '6px', fontWeight: 500 }}>
                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
@@ -195,10 +224,10 @@ const SupportChat = ({ user, theme }) => {
                         <form
                             onSubmit={handleSend}
                             style={{
-                                padding: '15px',
-                                background: 'rgba(0,0,0,0.3)',
+                                padding: '20px',
+                                background: isDark ? 'rgba(0,0,0,0.4)' : 'white',
                                 display: 'flex',
-                                gap: '10px',
+                                gap: '12px',
                                 borderTop: '1px solid var(--glass-border)'
                             }}
                         >
@@ -209,29 +238,36 @@ const SupportChat = ({ user, theme }) => {
                                 placeholder="Type your message..."
                                 style={{
                                     flex: 1,
-                                    background: 'rgba(255,255,255,0.05)',
+                                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
                                     border: '1px solid var(--glass-border)',
-                                    borderRadius: '12px',
-                                    padding: '10px 15px',
+                                    borderRadius: '16px',
+                                    padding: '12px 20px',
                                     color: 'var(--text-main)',
                                     outline: 'none',
-                                    fontSize: '0.9rem'
+                                    fontSize: '0.95rem',
+                                    transition: 'all 0.3s ease'
                                 }}
+                                onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
+                                onBlur={(e) => e.target.style.borderColor = 'var(--glass-border)'}
                             />
                             <button
                                 type="submit"
                                 style={{
-                                    width: '45px',
-                                    height: '45px',
-                                    borderRadius: '12px',
+                                    width: '48px',
+                                    height: '48px',
+                                    borderRadius: '16px',
                                     background: 'var(--primary)',
                                     color: 'black',
                                     border: 'none',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center'
+                                    justifyContent: 'center',
+                                    boxShadow: '0 4px 15px var(--primary-glow)',
+                                    transition: 'all 0.3s ease'
                                 }}
+                                onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                             >
                                 <Send size={20} />
                             </button>
