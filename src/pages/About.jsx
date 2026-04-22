@@ -31,7 +31,7 @@ const About = ({ theme }) => {
                 <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4rem)', fontWeight: 800, marginBottom: '25px', lineHeight: 1.1 }}>
                     About Our <span className="text-gradient">Platform</span>
                 </h1>
-                <p style={{ fontSize: 'clamp(1.1rem, 2vw, 1.4rem)', color: 'var(--text-dim)', maxWidth: '800px', margin: '0 auto', lineHeight: 1.6 }}>
+                <p style={{ fontSize: 'clamp(1.1rem, 2vw, 1.4rem)', color: 'var(--text-dim)', maxWidth: '800px', margin: '0 auto', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                     {settings.aboutMessage || "Discover the future of digital asset management and profitable investment strategies."}
                 </p>
             </motion.div>

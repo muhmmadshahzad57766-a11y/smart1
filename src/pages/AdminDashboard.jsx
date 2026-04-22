@@ -405,7 +405,6 @@ const AdminDashboard = ({ theme }) => {
           { id: 'users', label: 'Users', icon: Users },
           { id: 'investments', label: 'Payments', icon: DollarSign },
           { id: 'withdrawals', label: 'Withdraws', icon: Download },
-          { id: 'plans', label: 'Plans', icon: Briefcase },
           { id: 'support', label: 'Support', icon: MessageSquare, badge: supportConversations.reduce((acc, c) => acc + c.unreadCount, 0) },
           { id: 'settings', label: 'Config', icon: Palette }
         ].map(tab => (
@@ -632,90 +631,7 @@ const AdminDashboard = ({ theme }) => {
               </motion.div>
             )}
 
-            {activeTab === 'plans' && (
-              <motion.div key="plans" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
-                  <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Investment Strategies</h3>
-                  <button onClick={() => setShowAddPlan(true)} className="gradient-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', width: 'clamp(140px, 100%, 180px)', justifyContent: 'center' }}>
-                    <Plus size={18} /> New Plan
-                  </button>
-                </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '20px' }}>
-                  {plans.map(plan => {
-                    const updates = dirtyPlans[plan.id] || {};
-                    const isDirty = Object.keys(updates).length > 0;
-
-                    return (
-                      <div key={plan.id} className="glass" style={{ padding: '25px', borderRadius: '24px', border: isDirty ? '1px solid var(--primary)' : '1px solid var(--glass-border)', transition: 'all 0.3s ease' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                          <input
-                            value={updates.name !== undefined ? updates.name : plan.name}
-                            onChange={(e) => handleUpdatePlanField(plan.id, 'name', e.target.value)}
-                            style={{ background: 'none', border: 'none', color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: 700, width: '70%' }}
-                          />
-                          <button onClick={() => handleDeletePlan(plan.id)} style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer' }}>
-                            <Trash2 size={20} />
-                          </button>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '20px' }}>
-                          <div>
-                            <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Price (PKR)</label>
-                            <input
-                              type="number"
-                              className="glass"
-                              value={updates.price !== undefined ? updates.price : plan.price}
-                              onChange={(e) => handleUpdatePlanField(plan.id, 'price', e.target.value)}
-                              style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Percentage (%)</label>
-                            <input
-                              type="number"
-                              className="glass"
-                              value={updates.percentage !== undefined ? updates.percentage : (plan.percentage || Math.round((plan.dailyReward / plan.price) * 100))}
-                              onChange={(e) => handleUpdatePlanField(plan.id, 'percentage', e.target.value)}
-                              style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Daily Reward (PKR)</label>
-                            <input
-                              type="number"
-                              className="glass"
-                              value={updates.dailyReward !== undefined ? updates.dailyReward : plan.dailyReward}
-                              onChange={(e) => handleUpdatePlanField(plan.id, 'dailyReward', e.target.value)}
-                              style={{ width: '100%', padding: '10px', marginTop: '5px', color: 'var(--text-main)', fontWeight: 600 }}
-                            />
-                          </div>
-                        </div>
-
-                        {isDirty && (
-                          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                            <button
-                              onClick={() => handleSavePlan(plan.id)}
-                              className="gradient-btn"
-                              style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }}
-                            >
-                              Save Changes
-                            </button>
-                            <button
-                              onClick={() => handleCancelEdit(plan.id)}
-                              className="glass"
-                              style={{ flex: 1, padding: '8px', fontSize: '0.85rem', color: 'var(--text-dim)' }}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
 
             {activeTab === 'support' && (
               <motion.div key="support" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ height: '600px', display: 'flex', gap: '20px' }}>
