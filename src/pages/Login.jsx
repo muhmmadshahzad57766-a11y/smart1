@@ -50,8 +50,8 @@ const Login = ({ onLogin, user }) => {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      height: 'calc(100vh - 100px)',
-      padding: '20px'
+      minHeight: '100vh',
+      padding: '40px 20px'
     }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -64,22 +64,29 @@ const Login = ({ onLogin, user }) => {
         </h2>
 
         <div style={{
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '15px',
-          padding: '15px',
-          marginBottom: '25px',
-          fontSize: '0.85rem',
-          lineHeight: '1.6',
+          background: 'rgba(255, 255, 255, 0.03)',
+          borderRadius: '20px',
+          padding: '20px',
+          marginBottom: '30px',
+          fontSize: '0.9rem',
+          lineHeight: '1.8',
           color: 'var(--text-dim)',
-          textAlign: 'center',
-          border: '1px solid var(--glass-border)'
+          border: '1px solid var(--glass-border)',
+          boxShadow: 'inset 0 0 20px rgba(255,255,255,0.02)'
         }}>
-          <p dir="rtl" style={{ fontSize: '1rem', marginBottom: '10px', color: 'var(--text-main)', fontWeight: 500 }}>
+          <p dir="rtl" style={{
+            fontSize: '1.1rem',
+            marginBottom: '15px',
+            color: 'var(--text-main)',
+            fontWeight: 500,
+            textAlign: 'right',
+            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+          }}>
             السلام علیکم،<br />
             ہم ایک منظم اور تجربہ کار انویسٹمنٹ سسٹم کے تحت کام کرتے ہیں جہاں سرمایہ کاروں کی رقم کو مختلف بینکنگ چینلز، کاروباری مواقع اور قابلِ اعتماد پارٹنرز کے ساتھ لگایا جاتا ہے۔ ہمارا مقصد محفوظ طریقے سے سرمایہ کو بڑھانا اور سرمایہ کاروں کو مستقل بنیادوں پر منافع فراہم کرنا ہے۔
           </p>
-          <hr style={{ border: 'none', borderTop: '1px solid var(--glass-border)', margin: '10px 0' }} />
-          <p>
+          <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, var(--glass-border), transparent)', margin: '15px 0' }} />
+          <p style={{ textAlign: 'left', fontSize: '0.85rem' }}>
             Hello,<br />
             We operate under a structured and experienced investment system where investors' money is invested through various banking channels, business opportunities and trusted partners. Our goal is to grow capital safely and provide investors with consistent returns.
           </p>
