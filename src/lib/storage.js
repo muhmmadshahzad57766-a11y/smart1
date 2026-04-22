@@ -153,14 +153,46 @@ export const deleteUser = async (userId) => {
 // Getting Settings
 export const getSettings = async () => {
   const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single();
-  if (error || !data) return { themeColor: '#4facfe', theme: 'dark', referralRewardPercent: 10, minWithdrawal: 500, siteName: 'InvestSmart', adminWallets: {} };
+  if (error || !data) {
+    return {
+      themeColor: '#4facfe',
+      theme: 'dark',
+      referralRewardPercent: 10,
+      minWithdrawal: 500,
+      siteName: 'InvestSmart',
+      adminWallets: [
+        { id: 'easypaisa', title: 'Easypaisa', accounts: [] },
+        { id: 'jazzcash', title: 'JazzCash', accounts: [] }
+      ]
+    };
+  }
+
+  let adminWallets = data.admin_wallets || {};
+
+  // Migration: If it's an object (old format), convert to array
+  if (!Array.isArray(adminWallets)) {
+    const migrated = [];
+    if (adminWallets.easypaisa) {
+      migrated.push({ id: 'easypaisa', title: 'Easypaisa', accounts: adminWallets.easypaisa });
+    } else {
+      migrated.push({ id: 'easypaisa', title: 'Easypaisa', accounts: [] });
+    }
+
+    if (adminWallets.jazzcash) {
+      migrated.push({ id: 'jazzcash', title: 'JazzCash', accounts: adminWallets.jazzcash });
+    } else {
+      migrated.push({ id: 'jazzcash', title: 'JazzCash', accounts: [] });
+    }
+    adminWallets = migrated;
+  }
+
   return {
     themeColor: data.theme_color,
     theme: data.theme,
     referralRewardPercent: data.referral_reward_percent,
     minWithdrawal: data.min_withdrawal || 500,
     siteName: data.site_name || 'InvestSmart',
-    adminWallets: data.admin_wallets || { easypaisa: [], jazzcash: [] }
+    adminWallets: adminWallets
   };
 };
 

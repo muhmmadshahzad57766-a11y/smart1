@@ -802,131 +802,117 @@ const AdminDashboard = ({ theme }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '30px' }}>
                   {/* Payment Details */}
                   <div className="glass" style={{ padding: 'clamp(20px, 5vw, 30px)', borderRadius: '24px' }}>
-                    <h4 style={{ marginBottom: '20px', fontWeight: 700 }}>Admin Wallet (For User Payments)</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      {/* Easypaisa Section */}
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                          <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', fontWeight: 600 }}>Easypaisa Accounts</label>
-                          <button
-                            className="glass"
-                            style={{ padding: '4px 10px', fontSize: '0.75rem', color: 'var(--primary)' }}
-                            onClick={() => {
-                              const s = { ...settings };
-                              if (!s.adminWallets) s.adminWallets = { easypaisa: [], jazzcash: [] };
-                              if (!Array.isArray(s.adminWallets.easypaisa)) s.adminWallets.easypaisa = [];
-                              s.adminWallets.easypaisa.push({ number: '', name: '', id: Date.now() });
-                              setSettings(s);
-                            }}
-                          >
-                            + Add New
-                          </button>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          {(settings.adminWallets?.easypaisa && Array.isArray(settings.adminWallets.easypaisa)) ? settings.adminWallets.easypaisa.map((acc, index) => (
-                            <div key={acc.id || index} className="glass" style={{ padding: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)' }}>
-                              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <input
-                                  className="glass"
-                                  placeholder="Number (e.g. 0300...)"
-                                  value={acc.number || ''}
-                                  onChange={(e) => {
-                                    const s = { ...settings };
-                                    s.adminWallets.easypaisa[index].number = e.target.value;
-                                    setSettings(s);
-                                  }}
-                                  style={{ width: '100%', padding: '8px', color: 'var(--text-main)', fontSize: '0.9rem' }}
-                                />
-                                <input
-                                  className="glass"
-                                  placeholder="Account Name"
-                                  value={acc.name || ''}
-                                  onChange={(e) => {
-                                    const s = { ...settings };
-                                    s.adminWallets.easypaisa[index].name = e.target.value;
-                                    setSettings(s);
-                                  }}
-                                  style={{ width: '100%', padding: '8px', color: 'var(--text-dim)', fontSize: '0.8rem' }}
-                                />
-                              </div>
-                              <button
-                                onClick={() => {
-                                  const s = { ...settings };
-                                  s.adminWallets.easypaisa.splice(index, 1);
-                                  setSettings(s);
-                                }}
-                                style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', paddingTop: '8px' }}
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          )) : (
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'center' }}>No Easypaisa accounts added.</p>
-                          )}
-                        </div>
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                      <h4 style={{ fontWeight: 700 }}>Payment Accounts</h4>
+                      <button
+                        className="glass"
+                        style={{ padding: '8px 16px', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 700 }}
+                        onClick={() => {
+                          const s = { ...settings };
+                          if (!Array.isArray(s.adminWallets)) s.adminWallets = [];
+                          s.adminWallets.push({ id: Date.now().toString(), title: 'New Category', accounts: [] });
+                          setSettings(s);
+                        }}
+                      >
+                        + Add Category
+                      </button>
+                    </div>
 
-                      {/* JazzCash Section */}
-                      <div style={{ marginTop: '10px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                          <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', fontWeight: 600 }}>JazzCash Accounts</label>
-                          <button
-                            className="glass"
-                            style={{ padding: '4px 10px', fontSize: '0.75rem', color: 'var(--secondary)' }}
-                            onClick={() => {
-                              const s = { ...settings };
-                              if (!s.adminWallets) s.adminWallets = { easypaisa: [], jazzcash: [] };
-                              if (!Array.isArray(s.adminWallets.jazzcash)) s.adminWallets.jazzcash = [];
-                              s.adminWallets.jazzcash.push({ number: '', name: '', id: Date.now() });
-                              setSettings(s);
-                            }}
-                          >
-                            + Add New
-                          </button>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          {(settings.adminWallets?.jazzcash && Array.isArray(settings.adminWallets.jazzcash)) ? settings.adminWallets.jazzcash.map((acc, index) => (
-                            <div key={acc.id || index} className="glass" style={{ padding: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)' }}>
-                              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <input
-                                  className="glass"
-                                  placeholder="Number (e.g. 0340...)"
-                                  value={acc.number || ''}
-                                  onChange={(e) => {
-                                    const s = { ...settings };
-                                    s.adminWallets.jazzcash[index].number = e.target.value;
-                                    setSettings(s);
-                                  }}
-                                  style={{ width: '100%', padding: '8px', color: 'var(--text-main)', fontSize: '0.9rem' }}
-                                />
-                                <input
-                                  className="glass"
-                                  placeholder="Account Name"
-                                  value={acc.name || ''}
-                                  onChange={(e) => {
-                                    const s = { ...settings };
-                                    s.adminWallets.jazzcash[index].name = e.target.value;
-                                    setSettings(s);
-                                  }}
-                                  style={{ width: '100%', padding: '8px', color: 'var(--text-dim)', fontSize: '0.8rem' }}
-                                />
-                              </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                      {Array.isArray(settings.adminWallets) && settings.adminWallets.map((cat, catIndex) => (
+                        <div key={cat.id || catIndex} className="glass" style={{ padding: '20px', borderRadius: '20px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                            <input
+                              className="glass"
+                              value={cat.title || ''}
+                              onChange={(e) => {
+                                const s = { ...settings };
+                                s.adminWallets[catIndex].title = e.target.value;
+                                setSettings(s);
+                              }}
+                              placeholder="Category Title (e.g. SadaPay)"
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                borderBottom: '1px solid var(--glass-border)',
+                                color: 'var(--primary)',
+                                fontWeight: 700,
+                                fontSize: '1rem',
+                                padding: '4px 0',
+                                width: '180px'
+                              }}
+                            />
+                            <div style={{ display: 'flex', gap: '10px' }}>
                               <button
+                                className="glass"
+                                style={{ padding: '4px 10px', fontSize: '0.7rem', color: 'var(--accent-green)' }}
                                 onClick={() => {
                                   const s = { ...settings };
-                                  s.adminWallets.jazzcash.splice(index, 1);
+                                  s.adminWallets[catIndex].accounts.push({ number: '', name: '', id: Date.now() });
                                   setSettings(s);
                                 }}
-                                style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', paddingTop: '8px' }}
+                              >
+                                + Add Account
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Delete the entire "${cat.title}" category?`)) {
+                                    const s = { ...settings };
+                                    s.adminWallets.splice(catIndex, 1);
+                                    setSettings(s);
+                                  }
+                                }}
+                                style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer' }}
                               >
                                 <Trash2 size={16} />
                               </button>
                             </div>
-                          )) : (
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'center' }}>No JazzCash accounts added.</p>
-                          )}
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {cat.accounts.length > 0 ? cat.accounts.map((acc, accIndex) => (
+                              <div key={acc.id || accIndex} className="glass" style={{ padding: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)' }}>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  <input
+                                    className="glass"
+                                    placeholder="Account Number"
+                                    value={acc.number || ''}
+                                    onChange={(e) => {
+                                      const s = { ...settings };
+                                      s.adminWallets[catIndex].accounts[accIndex].number = e.target.value;
+                                      setSettings(s);
+                                    }}
+                                    style={{ width: '100%', padding: '8px', color: 'var(--text-main)', fontSize: '0.9rem' }}
+                                  />
+                                  <input
+                                    className="glass"
+                                    placeholder="Account Title"
+                                    value={acc.name || ''}
+                                    onChange={(e) => {
+                                      const s = { ...settings };
+                                      s.adminWallets[catIndex].accounts[accIndex].name = e.target.value;
+                                      setSettings(s);
+                                    }}
+                                    style={{ width: '100%', padding: '8px', color: 'var(--text-dim)', fontSize: '0.8rem' }}
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    const s = { ...settings };
+                                    s.adminWallets[catIndex].accounts.splice(accIndex, 1);
+                                    setSettings(s);
+                                  }}
+                                  style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', paddingTop: '8px' }}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            )) : (
+                              <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'center' }}>No accounts in this category.</p>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
 

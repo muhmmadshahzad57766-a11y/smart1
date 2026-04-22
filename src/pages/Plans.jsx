@@ -199,36 +199,23 @@ const Plans = ({ user, setUser, theme }) => {
                   <p style={{ color: 'var(--text-dim)', marginBottom: '30px' }}>Please send the plan amount to one of the following accounts.</p>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {/* Easypaisa */}
-                    <div style={{ padding: '25px', background: 'linear-gradient(135deg, rgba(22, 163, 74, 0.1), rgba(22, 163, 74, 0.05))', borderRadius: '24px', border: '1px solid rgba(22, 163, 74, 0.2)' }}>
-                      <div style={{ color: 'var(--accent-green)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '15px' }}>Easypaisa Accounts</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        {settings.adminWallets?.easypaisa?.length > 0 ? settings.adminWallets.easypaisa.map((acc, i) => (
-                          <div key={i} style={{ padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
-                            <div style={{ fontSize: '1.2rem', fontWeight: 700, margin: '5px 0', display: 'flex', justifyContent: 'space-between' }}>
-                              <span>{acc.number}</span>
-                              <Copy size={16} style={{ cursor: 'pointer', color: 'var(--primary)' }} onClick={() => { navigator.clipboard.writeText(acc.number); alert('Number copied!'); }} />
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Name: {acc.name}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {Array.isArray(settings.adminWallets) && settings.adminWallets.map((cat, idx) => (
+                        <div key={cat.id || idx} style={{ padding: '25px', background: 'var(--surface-light)', borderRadius: '24px', border: '1px solid var(--glass-border)' }}>
+                          <div style={{ color: 'var(--primary)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '15px' }}>{cat.title} Accounts</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            {cat.accounts?.length > 0 ? cat.accounts.map((acc, i) => (
+                              <div key={i} style={{ padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700, margin: '5px 0', display: 'flex', justifyContent: 'space-between' }}>
+                                  <span>{acc.number}</span>
+                                  <Copy size={16} style={{ cursor: 'pointer', color: 'var(--primary)' }} onClick={() => { navigator.clipboard.writeText(acc.number); alert('Number copied!'); }} />
+                                </div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Name: {acc.name}</div>
+                              </div>
+                            )) : <div style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>Contact admin for details.</div>}
                           </div>
-                        )) : <div style={{ color: 'var(--text-dim)' }}>No Easypaisa accounts available.</div>}
-                      </div>
-                    </div>
-
-                    {/* Jazzcash */}
-                    <div style={{ padding: '25px', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05))', borderRadius: '24px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                      <div style={{ color: 'var(--accent-yellow)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '15px' }}>JazzCash Accounts</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        {settings.adminWallets?.jazzcash?.length > 0 ? settings.adminWallets.jazzcash.map((acc, i) => (
-                          <div key={i} style={{ padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
-                            <div style={{ fontSize: '1.2rem', fontWeight: 700, margin: '5px 0', display: 'flex', justifyContent: 'space-between' }}>
-                              <span>{acc.number}</span>
-                              <Copy size={16} style={{ cursor: 'pointer', color: 'var(--secondary)' }} onClick={() => { navigator.clipboard.writeText(acc.number); alert('Number copied!'); }} />
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Name: {acc.name}</div>
-                          </div>
-                        )) : <div style={{ color: 'var(--text-dim)' }}>No JazzCash accounts available.</div>}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -247,9 +234,11 @@ const Plans = ({ user, setUser, theme }) => {
                   <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div>
                       <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', display: 'block', marginBottom: '8px' }}>Payment Method Used</label>
-                      <select className="glass" value={formData.method} onChange={e => setFormData({ ...formData, method: e.target.value })} style={{ width: '100%', padding: '14px', color: 'var(--text-main)', background: 'var(--surface)' }}>
-                        <option value="easypaisa">Easypaisa</option>
-                        <option value="jazzcash">JazzCash</option>
+                      <select className="glass" value={formData.method} onChange={e => setFormData({ ...formData, method: e.target.value })} style={{ width: '100%', padding: '14px', color: 'var(--text-main)', background: 'var(--surface-light)' }}>
+                        <option value="">Select Method</option>
+                        {Array.isArray(settings.adminWallets) && settings.adminWallets.map(cat => (
+                          <option key={cat.id} value={cat.title}>{cat.title}</option>
+                        ))}
                       </select>
                     </div>
 

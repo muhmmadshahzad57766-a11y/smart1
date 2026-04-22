@@ -97,11 +97,12 @@ const Withdraw = ({ user, setUser, theme }) => {
                 className="glass"
                 value={method}
                 onChange={(e) => setMethod(e.target.value)}
-                style={{ width: '100%', padding: '12px', color: 'var(--text-main)', background: 'var(--surface)' }}
+                style={{ width: '100%', padding: '12px', color: 'var(--text-main)', background: 'var(--surface-light)' }}
               >
-                <option value="JazzCash">JazzCash</option>
-                <option value="EasyPaisa">EasyPaisa</option>
-                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="">Select Method</option>
+                {Array.isArray(settings.adminWallets) && settings.adminWallets.map(cat => (
+                  <option key={cat.id} value={cat.title}>{cat.title}</option>
+                ))}
               </select>
             </div>
 
