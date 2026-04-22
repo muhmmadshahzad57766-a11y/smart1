@@ -15,6 +15,7 @@ const Dashboard = ({ user, setUser, theme }) => {
   const [settings, setSettings] = useState(null);
   const [userRewards, setUserRewards] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [timeframe, setTimeframe] = useState('daily');
 
   useEffect(() => {
     const init = async () => {
@@ -54,19 +55,34 @@ const Dashboard = ({ user, setUser, theme }) => {
 
     const totalProfit = userRewards.reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
 
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const chartData = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today - i * 86400000);
-      const dayLabel = days[d.getDay()];
-      const dayProfit = userRewards
-        .filter(r => new Date(r.timestamp).setHours(0, 0, 0, 0) === d.setHours(0, 0, 0, 0))
-        .reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
-      chartData.push({ label: dayLabel, value: dayProfit });
+    if (timeframe === 'daily') {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today - i * 86400000);
+        const dayLabel = days[d.getDay()];
+        const dayProfit = userRewards
+          .filter(r => new Date(r.timestamp).setHours(0, 0, 0, 0) === d.setHours(0, 0, 0, 0))
+          .reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+        chartData.push({ label: dayLabel, value: dayProfit });
+      }
+    } else {
+      // Weekly: Last 4 weeks
+      for (let i = 3; i >= 0; i--) {
+        const start = new Date(today - (i * 7 + 6) * 86400000).setHours(0, 0, 0, 0);
+        const end = new Date(today - i * 7 * 86400000).setHours(23, 59, 59, 999);
+        const weekProfit = userRewards
+          .filter(r => {
+            const ts = new Date(r.timestamp).getTime();
+            return ts >= start && ts <= end;
+          })
+          .reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+        chartData.push({ label: `W${4 - i}`, value: weekProfit });
+      }
     }
 
     return { todayProfit, yesterdayProfit, totalProfit, chartData };
-  }, [userRewards]);
+  }, [userRewards, timeframe]);
 
   if (!user || loading) return <div style={{ padding: '50px', textAlign: 'center', color: 'var(--primary)' }}>Initializing Dashboard...</div>;
 
@@ -75,7 +91,7 @@ const Dashboard = ({ user, setUser, theme }) => {
     const padding = 30;
     const width = 400;
     const height = 180;
-    const maxVal = Math.max(...data.map(d => d.value), 200);
+    const maxVal = Math.max(...data.map(d => d.value), 100);
     const stepX = (width - padding * 2) / (data.length - 1);
 
     const points = data.map((d, i) => {
@@ -206,8 +222,38 @@ const Dashboard = ({ user, setUser, theme }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
               <h3 style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text-main)' }}>Earnings Over Time</h3>
               <div style={{ display: 'flex', gap: '8px', background: 'var(--surface-light)', padding: '6px', borderRadius: '15px' }}>
-                <span style={{ padding: '6px 14px', fontSize: '0.8rem', background: 'var(--primary)', color: 'white', borderRadius: '12px', fontWeight: 700 }}>Daily</span>
-                <span style={{ padding: '6px 14px', fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: 600 }}>Weekly</span>
+                <button
+                  onClick={() => setTimeframe('daily')}
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: '0.8rem',
+                    background: timeframe === 'daily' ? 'var(--primary)' : 'none',
+                    color: timeframe === 'daily' ? 'white' : 'var(--text-dim)',
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  Daily
+                </button>
+                <button
+                  onClick={() => setTimeframe('weekly')}
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: '0.8rem',
+                    background: timeframe === 'weekly' ? 'var(--primary)' : 'none',
+                    color: timeframe === 'weekly' ? 'white' : 'var(--text-dim)',
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  Weekly
+                </button>
               </div>
             </div>
             <div style={{ height: '200px' }}>
