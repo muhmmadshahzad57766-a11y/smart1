@@ -54,305 +54,272 @@ const Dashboard = ({ user, setUser, theme }) => {
     init();
   }, [user?.id]);
 
-  const copyReferral = () => {
-    if (user && user.referralCode) {
-      const link = `${window.location.origin}/login?ref=${user.referralCode}`;
-      navigator.clipboard.writeText(link);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  const stats = useMemo(() => {
+    const today = new Date().setHours(0, 0, 0, 0);
+    const yesterday = new Date(today - 86400000).setHours(0, 0, 0, 0);
+
+    const todayProfit = userRewards
+      .filter(r => new Date(r.timestamp).setHours(0, 0, 0, 0) === today)
+      .reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+
+    const yesterdayProfit = userRewards
+      .filter(r => new Date(r.timestamp).setHours(0, 0, 0, 0) === yesterday)
+      .reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+
+    const totalProfit = userRewards.reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+
+    // Prepare chart data (last 7 days)
+    const chartData = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today - i * 86400000);
+      const dayLabel = d.toLocaleDateString(undefined, { weekday: 'short' });
+      const dayProfit = userRewards
+        .filter(r => new Date(r.timestamp).setHours(0, 0, 0, 0) === d.setHours(0, 0, 0, 0))
+        .reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+      chartData.push({ label: dayLabel, value: dayProfit });
     }
+
+    return { todayProfit, yesterdayProfit, totalProfit, chartData };
+  }, [userRewards]);
+
+  if (!user || loading) return <div style={{ padding: '50px', textAlign: 'center', color: 'var(--primary)' }}>Initializing Dashboard...</div>;
+
+  const ChartSVG = ({ data }) => {
+    if (!data || data.length === 0) return null;
+    const padding = 40;
+    const width = 400;
+    const height = 200;
+    const maxVal = Math.max(...data.map(d => d.value), 100);
+    const stepX = (width - padding * 2) / (data.length - 1);
+
+    const points = data.map((d, i) => {
+      const x = padding + i * stepX;
+      const y = height - padding - (d.value / maxVal) * (height - padding * 2);
+      return `${x},${y}`;
+    }).join(' ');
+
+    const areaPoints = `${padding},${height - padding} ${points} ${width - padding},${height - padding}`;
+
+    return (
+      <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto' }}>
+        <defs>
+          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {/* Grid lines */}
+        {[0, 0.5, 1].map((v, i) => (
+          <line
+            key={i}
+            x1={padding}
+            y1={height - padding - v * (height - padding * 2)}
+            x2={width - padding}
+            y2={height - padding - v * (height - padding * 2)}
+            stroke="rgba(255,255,255,0.05)"
+            strokeWidth="1"
+          />
+        ))}
+        {/* Labels */}
+        {data.map((d, i) => (
+          <text
+            key={i}
+            x={padding + i * stepX}
+            y={height - 10}
+            fill="var(--text-dim)"
+            fontSize="10"
+            textAnchor="middle"
+          >
+            {d.label}
+          </text>
+        ))}
+        {/* Area */}
+        <polygon points={areaPoints} fill="url(#chartGradient)" />
+        {/* Line */}
+        <polyline
+          fill="none"
+          stroke="var(--primary)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={points}
+        />
+        {/* Dots */}
+        {data.map((d, i) => (
+          <circle
+            key={i}
+            cx={padding + i * stepX}
+            cy={height - padding - (d.value / maxVal) * (height - padding * 2)}
+            r="4"
+            fill="var(--bg-dark)"
+            stroke="var(--primary)"
+            strokeWidth="2"
+          />
+        ))}
+      </svg>
+    );
   };
 
-  const stats = useMemo(() => {
-    const rewardPercent = userPlan ? ((userPlan.dailyReward / userPlan.price) * 100).toFixed(1) : 0;
-    const totalEarned = userRewards.reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
-    return { rewardPercent, totalEarned };
-  }, [userPlan, userRewards]);
-
-  if (!user || loading) return <div style={{ padding: '50px', textAlign: 'center' }}>Loading user data...</div>;
-
   return (
-    <div style={{ padding: 'clamp(15px, 4vw, 30px)', maxWidth: '1200px', margin: '0 auto' }} className="fade-in">
+    <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', paddingBottom: '100px' }} className="fade-in">
 
-      {/* Notifications / Alerts */}
-      <AnimatePresence>
-        {pendingInvestment && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.2)',
-              borderRadius: '20px',
-              padding: '20px',
-              marginBottom: '30px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '15px'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <div style={{ padding: '10px', background: 'var(--accent-yellow)', borderRadius: '12px', color: 'black' }}>
-                <Clock size={20} />
-              </div>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent-yellow)' }}>Investment Pending Verification</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>
-                  Your request for the <b>{pendingInvestment.planName || 'Plan'}</b> is being reviewed by Admin.
-                </div>
-              </div>
-            </div>
-            <div className="badge badge-warning">Verification Active</div>
-          </motion.div>
-        )}
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        <div>
+          <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem', fontWeight: 500 }}>Welcome,</p>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 800 }}>{user.username}</h1>
+        </div>
+        <button className="glass" style={{ padding: '10px', borderRadius: '12px' }}>
+          <Bell size={24} color="var(--text-main)" />
+        </button>
+      </div>
 
-        {userPlan && userRewards.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.2)',
-              borderRadius: '20px',
-              padding: '20px',
-              marginBottom: '30px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '15px'
-            }}
-          >
-            <div style={{ padding: '10px', background: 'var(--accent-green)', borderRadius: '12px', color: 'black' }}>
-              <CheckCircle size={20} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent-green)' }}>Plan Successfully Activated!</div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>
-                Welcome to the <b>{userPlan.name} Strategy</b>. Your daily earnings will start accruing automatically.
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Main Balance Card */}
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        style={{
+          background: 'linear-gradient(135deg, #16a34a 0%, #059669 100%)',
+          borderRadius: '24px',
+          padding: '25px',
+          color: 'white',
+          marginBottom: '20px',
+          boxShadow: '0 10px 30px rgba(22, 163, 74, 0.3)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '150px', height: '150px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%' }} />
+        <p style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '5px' }}>Total Balance</p>
+        <h2 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '15px' }}>
+          <span style={{ fontSize: '1.2rem', fontWeight: 400 }}>PKR</span> {(Number(user.balance) || 0).toLocaleString()}
+        </h2>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="badge" style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}>Live Assets</div>
+          {pendingInvestment && <div className="badge" style={{ background: 'var(--accent-yellow)', color: 'black' }}>Pending Verification</div>}
+        </div>
+      </motion.div>
 
-      {/* Hero Welcome Section */}
-      <section style={{ marginBottom: '40px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', marginBottom: '10px', fontSize: '0.9rem', fontWeight: 600 }}>
-              <Shield size={18} /> SECURE INVESTMENT PORTFOLIO
-            </div>
-            <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', fontWeight: 800 }}>Welcome back, <span className="gradient-text">{user.username}</span></h1>
-            <p style={{ color: 'var(--text-dim)', marginTop: '5px', fontSize: '1.1rem' }}>
-              Your wealth is being managed with precision. {userPlan ? `Your ${userPlan.name} strategy is active.` : 'Start your journey today.'}
-            </p>
+      {/* Three Stats Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+        <div className="glass" style={{ padding: '20px', borderRadius: '20px' }}>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginBottom: '5px' }}>Today Profit</p>
+          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--accent-green)' }}>
+            +PKR {stats.todayProfit.toLocaleString()}
+          </h3>
+        </div>
+        <div className="glass" style={{ padding: '20px', borderRadius: '20px' }}>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginBottom: '5px' }}>Yesterday Profit</p>
+          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--primary)' }}>
+            +PKR {stats.yesterdayProfit.toLocaleString()}
+          </h3>
+        </div>
+      </div>
+
+      <div className="glass" style={{ padding: '20px', borderRadius: '20px', marginBottom: '30px' }}>
+        <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginBottom: '5px' }}>Total Profit</p>
+        <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>
+          ++PKR {stats.totalProfit.toLocaleString()}
+        </h3>
+      </div>
+
+      {/* Analytics Chart */}
+      <div className="glass" style={{ padding: '25px', borderRadius: '24px', marginBottom: '30px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>Earnings Over Time</h3>
+          <div style={{ display: 'flex', gap: '5px', background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '10px' }}>
+            <span style={{ padding: '4px 8px', fontSize: '0.7rem', background: 'var(--primary)', color: 'black', borderRadius: '8px', fontWeight: 600 }}>Daily</span>
+            <span style={{ padding: '4px 8px', fontSize: '0.7rem', color: 'var(--text-dim)' }}>Weekly</span>
           </div>
-
-          {userPlan && (
-            <div style={{
-              padding: '15px 25px',
-              background: 'rgba(79, 172, 254, 0.1)',
-              borderRadius: '20px',
-              border: '1px solid rgba(79, 172, 254, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '15px'
-            }}>
-              <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme === 'dark' ? 'black' : 'white' }}>
-                <TrendingUp size={24} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase' }}>Current Strategy</div>
-                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}>{userPlan.name}</div>
-              </div>
-            </div>
+        </div>
+        <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {userRewards.length > 0 ? (
+            <ChartSVG data={stats.chartData} />
+          ) : (
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>Start investing to see performance chart</p>
           )}
         </div>
-      </section>
+      </div>
 
-      {/* Main Stats Grid */}
+      {/* Investment Summary */}
+      <div className="glass" style={{ padding: '25px', borderRadius: '24px', marginBottom: '30px' }}>
+        <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '20px' }}>Investment Summary</h3>
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '10px' }}>
+            <span style={{ color: 'var(--text-dim)' }}>Active Investment</span>
+            <span style={{ color: 'var(--primary)', fontWeight: 700 }}>PKR {Number(user.investedAmount).toLocaleString()}</span>
+          </div>
+          <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: user.investedAmount > 0 ? '70%' : '0%' }}
+              style={{ height: '100%', background: 'linear-gradient(90deg, var(--primary) 0%, var(--accent-green) 100%)' }}
+            />
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '4px' }}>Total Deposited</p>
+            <p style={{ fontWeight: 800 }}>PKR {Number(user.investedAmount).toLocaleString()}</p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '4px' }}>Total Withdrawn</p>
+            <p style={{ fontWeight: 800 }}>PKR {(stats.totalProfit - user.balance > 0 ? stats.totalProfit - user.balance : 0).toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Sticky Bar */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-        gap: '20px',
-        marginBottom: '40px'
+        position: 'fixed',
+        bottom: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 'calc(100% - 40px)',
+        maxWidth: '460px',
+        background: 'rgba(20, 20, 20, 0.8)',
+        backdropFilter: 'blur(20px)',
+        padding: '12px',
+        borderRadius: '24px',
+        boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        zIndex: 1000,
+        border: '1px solid rgba(255,255,255,0.1)'
       }}>
-        {/* Balance Card - Premium */}
-        <div className="stat-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <div className="stat-card-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-green)', marginBottom: 0 }}>
-              <Wallet size={24} />
-            </div>
-            <div className="badge badge-success">Live Balance</div>
-          </div>
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Available Funds</p>
-          <h2 style={{ fontSize: '2.8rem', fontWeight: 800, margin: '5px 0' }}>PKR {(Number(user.balance) || 0).toLocaleString()}</h2>
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button onClick={() => window.location.href = '/withdraw'} className="gradient-btn" style={{ flex: 1, padding: '14px', width: '100%' }}>Withdraw Assets</button>
-          </div>
-        </div>
-
-        {/* Investment Performance */}
-        <div className="stat-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <div className="stat-card-icon" style={{ background: 'rgba(79, 172, 254, 0.1)', color: 'var(--primary)', marginBottom: 0 }}>
-              <TrendingUp size={24} />
-            </div>
-            <div className="badge badge-info">Performance</div>
-          </div>
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Active Investment</p>
-          <h3 style={{ fontSize: '2rem', fontWeight: 800 }}>PKR {(Number(user.investedAmount) || 0).toLocaleString()}</h3>
-          <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '15px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '5px' }}>
-              <span style={{ color: 'var(--text-dim)' }}>Yield Rate</span>
-              <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>+{stats.rewardPercent}% Daily</span>
-            </div>
-            <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(parseFloat(stats.rewardPercent) * 10, 100)}%` }}
-                style={{ height: '100%', background: 'var(--primary)' }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Total Earnings */}
-        <div className="stat-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <div className="stat-card-icon" style={{ background: 'rgba(240, 147, 251, 0.1)', color: 'var(--secondary)', marginBottom: 0 }}>
-              <Award size={24} />
-            </div>
-            <div className="badge badge-warning">Growth</div>
-          </div>
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Total Profit Generated</p>
-          <h3 style={{ fontSize: '2rem', fontWeight: 800 }}>PKR {(stats.totalEarned || 0).toLocaleString()}</h3>
-          <div style={{ marginTop: '20px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ padding: '8px 15px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', fontSize: '0.8rem' }}>
-              <span style={{ color: 'var(--text-dim)' }}>Daily:</span> <b style={{ color: 'var(--primary)' }}>PKR {(Number(user.dailyReward) || 0).toLocaleString()}</b>
-            </div>
-            <div style={{ padding: '8px 15px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', fontSize: '0.8rem' }}>
-              <span style={{ color: 'var(--text-dim)' }}>Ref:</span> <b style={{ color: 'var(--secondary)' }}>PKR {(Number(user.referralEarnings) || 0).toLocaleString()}</b>
-            </div>
-          </div>
-        </div>
+        <button
+          onClick={() => window.location.href = '/dashboard'}
+          className="glass"
+          style={{ padding: '12px', borderRadius: '15px', background: 'none' }}
+        >
+          <History size={24} color="var(--text-main)" />
+        </button>
+        <button
+          onClick={() => window.location.href = '/plans'}
+          className="glass"
+          style={{ flex: 1, padding: '14px', borderRadius: '18px', fontWeight: 700, fontSize: '1rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-main)' }}
+        >
+          Deposit
+        </button>
+        <button
+          onClick={() => window.location.href = '/withdraw'}
+          style={{
+            flex: 1,
+            padding: '14px',
+            borderRadius: '18px',
+            fontWeight: 700,
+            fontSize: '1rem',
+            background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            color: 'black',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          Withdraw
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '25px' }}>
-        {/* Activity Feed */}
-        <div className="glass" style={{ padding: '30px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '30px' }}>
-            <div style={{ padding: '10px', background: 'rgba(79, 172, 254, 0.1)', borderRadius: '12px', color: 'var(--primary)' }}>
-              <History size={20} />
-            </div>
-            <h3 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Activity Ledger</h3>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {!userRewards || userRewards.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>No transaction history found.</p>
-                <button onClick={() => window.location.href = '/plans'} style={{ marginTop: '15px', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Activate a plan to start earning</button>
-              </div>
-            ) : (
-              [...userRewards].sort((a, b) => b.timestamp - a.timestamp).slice(0, 6).map((reward, i) => (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '16px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    borderRadius: '16px',
-                    border: '1px solid var(--glass-border)'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--accent-green)', boxShadow: '0 0 10px var(--accent-green)' }} />
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Daily Reward Accrued</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginTop: '2px' }}>{new Date(reward.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                    </div>
-                  </div>
-                  <div style={{ color: 'var(--accent-green)', fontWeight: 800, fontSize: '1.05rem' }}>+ PKR {reward.amount}</div>
-                </motion.div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Affiliate & Actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-          {/* Affiliate Card */}
-          <div className="glass" style={{ padding: '30px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
-              <div style={{ padding: '12px', background: 'rgba(240, 147, 251, 0.1)', borderRadius: '15px', color: 'var(--secondary)' }}>
-                <Users size={22} />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Affiliate Program</h3>
-            </div>
-
-            <p style={{ color: 'var(--text-dim)', fontSize: '0.95rem', marginBottom: '20px', lineHeight: '1.6' }}>
-              Expand your network and earn <b style={{ color: 'var(--text-main)' }}>{settings?.referralRewardPercent || 10}%</b> for every successful referral investment.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: window.innerWidth < 480 ? 'column' : 'row', gap: '10px', background: 'rgba(0,0,0,0.1)', padding: '6px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-              <div style={{ flex: 1, padding: '12px 15px', fontFamily: 'monospace', fontSize: '1.1rem', letterSpacing: '3px', color: 'var(--primary)', fontWeight: 700 }}>
-                {user.referralCode || 'REF-XXXXX'}
-              </div>
-              <button
-                onClick={copyReferral}
-                style={{
-                  padding: '10px 20px',
-                  background: copied ? 'var(--accent-green)' : 'var(--primary)',
-                  border: 'none',
-                  borderRadius: '12px',
-                  color: isDark ? 'black' : 'white',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                {copied ? <CheckCircle size={18} /> : <Copy size={18} />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-            </div>
-
-            <div style={{ marginTop: '30px', display: 'flex', gap: '15px' }}>
-              <div style={{ flex: 1, padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '5px' }}>Earnings</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--secondary)' }}>PKR {(Number(user.referralEarnings) || 0).toLocaleString()}</div>
-              </div>
-              <div style={{ flex: 1, padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '5px' }}>Network</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)' }}>{user.referralCount || 0} Members</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Shortcuts */}
-          <div className="glass" style={{ padding: '30px' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '20px' }}>Quick Portfolio Actions</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <button onClick={() => window.location.href = '/plans'} className="glass" style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer', color: 'var(--text-main)', background: 'var(--surface)' }}>
-                <TrendingUp size={24} style={{ color: 'var(--primary)' }} />
-                <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Upgrade Plan</span>
-              </button>
-              <button onClick={() => window.location.href = '/withdraw'} className="glass" style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer', color: 'var(--text-main)', background: 'var(--surface)' }}>
-                <Wallet size={24} style={{ color: 'var(--secondary)' }} />
-                <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Liquidate Assets</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

@@ -201,16 +201,34 @@ const Plans = ({ user, setUser, theme }) => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     {/* Easypaisa */}
                     <div style={{ padding: '25px', background: 'linear-gradient(135deg, rgba(22, 163, 74, 0.1), rgba(22, 163, 74, 0.05))', borderRadius: '24px', border: '1px solid rgba(22, 163, 74, 0.2)' }}>
-                      <div style={{ color: 'var(--accent-green)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '5px' }}>Easypaisa</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 700, margin: '5px 0' }}>{settings.adminWallets?.easypaisa?.number}</div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>Name: {settings.adminWallets?.easypaisa?.name}</div>
+                      <div style={{ color: 'var(--accent-green)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '15px' }}>Easypaisa Accounts</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {settings.adminWallets?.easypaisa?.length > 0 ? settings.adminWallets.easypaisa.map((acc, i) => (
+                          <div key={i} style={{ padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 700, margin: '5px 0', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>{acc.number}</span>
+                              <Copy size={16} style={{ cursor: 'pointer', color: 'var(--primary)' }} onClick={() => { navigator.clipboard.writeText(acc.number); alert('Number copied!'); }} />
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Name: {acc.name}</div>
+                          </div>
+                        )) : <div style={{ color: 'var(--text-dim)' }}>No Easypaisa accounts available.</div>}
+                      </div>
                     </div>
 
                     {/* Jazzcash */}
                     <div style={{ padding: '25px', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05))', borderRadius: '24px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                      <div style={{ color: 'var(--accent-yellow)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '5px' }}>JazzCash</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 700, margin: '5px 0' }}>{settings.adminWallets?.jazzcash?.number}</div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>Name: {settings.adminWallets?.jazzcash?.name}</div>
+                      <div style={{ color: 'var(--accent-yellow)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '15px' }}>JazzCash Accounts</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {settings.adminWallets?.jazzcash?.length > 0 ? settings.adminWallets.jazzcash.map((acc, i) => (
+                          <div key={i} style={{ padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 700, margin: '5px 0', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>{acc.number}</span>
+                              <Copy size={16} style={{ cursor: 'pointer', color: 'var(--secondary)' }} onClick={() => { navigator.clipboard.writeText(acc.number); alert('Number copied!'); }} />
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Name: {acc.name}</div>
+                          </div>
+                        )) : <div style={{ color: 'var(--text-dim)' }}>No JazzCash accounts available.</div>}
+                      </div>
                     </div>
                   </div>
 

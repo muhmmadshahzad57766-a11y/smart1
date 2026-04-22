@@ -160,7 +160,7 @@ export const getSettings = async () => {
     referralRewardPercent: data.referral_reward_percent,
     minWithdrawal: data.min_withdrawal || 500,
     siteName: data.site_name || 'InvestSmart',
-    adminWallets: data.admin_wallets || { easypaisa: {}, jazzcash: {} }
+    adminWallets: data.admin_wallets || { easypaisa: [], jazzcash: [] }
   };
 };
 

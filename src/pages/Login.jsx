@@ -59,9 +59,31 @@ const Login = ({ onLogin, user }) => {
         className="glass"
         style={{ width: '100%', maxWidth: '400px', padding: '40px' }}
       >
-        <h2 style={{ marginBottom: '30px', textAlign: 'center' }}>
+        <h2 style={{ marginBottom: '10px', textAlign: 'center' }}>
           {isLogin ? 'Welcome Back' : 'Create Account'}
         </h2>
+
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '15px',
+          padding: '15px',
+          marginBottom: '25px',
+          fontSize: '0.85rem',
+          lineHeight: '1.6',
+          color: 'var(--text-dim)',
+          textAlign: 'center',
+          border: '1px solid var(--glass-border)'
+        }}>
+          <p dir="rtl" style={{ fontSize: '1rem', marginBottom: '10px', color: 'var(--text-main)', fontWeight: 500 }}>
+            السلام علیکم،<br />
+            ہم ایک منظم اور تجربہ کار انویسٹمنٹ سسٹم کے تحت کام کرتے ہیں جہاں سرمایہ کاروں کی رقم کو مختلف بینکنگ چینلز، کاروباری مواقع اور قابلِ اعتماد پارٹنرز کے ساتھ لگایا جاتا ہے۔ ہمارا مقصد محفوظ طریقے سے سرمایہ کو بڑھانا اور سرمایہ کاروں کو مستقل بنیادوں پر منافع فراہم کرنا ہے۔
+          </p>
+          <hr style={{ border: 'none', borderTop: '1px solid var(--glass-border)', margin: '10px 0' }} />
+          <p>
+            Hello,<br />
+            We operate under a structured and experienced investment system where investors' money is invested through various banking channels, business opportunities and trusted partners. Our goal is to grow capital safely and provide investors with consistent returns.
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="input-group">
