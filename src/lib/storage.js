@@ -336,6 +336,17 @@ export const handleInvestmentRequest = async (requestId, status) => {
 };
 
 export const submitWithdrawal = async (userId, amount, method, accountDetails) => {
+  const { data: user } = await supabase.from('users').select('balance, invested_amount').eq('id', userId).single();
+  const balance = Number(user.balance || 0);
+  const investedAmount = Number(user.invested_amount || 0);
+  const total = balance + investedAmount;
+
+  if (amount > total) throw new Error("Insufficient funds");
+
+  const newBalance = Math.max(0, balance - amount);
+  const remainingToDeduct = Math.max(0, amount - balance);
+  const newInvestedAmount = Math.max(0, investedAmount - remainingToDeduct);
+
   const { data } = await supabase.from('withdrawals').insert([{
     user_id: userId,
     amount,
@@ -344,9 +355,10 @@ export const submitWithdrawal = async (userId, amount, method, accountDetails) =
     status: 'pending'
   }]).select().single();
 
-  // Need to deduct amount from user immediately as pending
-  const { data: user } = await supabase.from('users').select('balance').eq('id', userId).single();
-  await supabase.from('users').update({ balance: Number(user.balance || 0) - amount }).eq('id', userId);
+  await supabase.from('users').update({
+    balance: newBalance,
+    invested_amount: newInvestedAmount
+  }).eq('id', userId);
 
   return data;
 };

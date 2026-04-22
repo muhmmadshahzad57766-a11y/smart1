@@ -29,8 +29,9 @@ const Withdraw = ({ user, setUser, theme }) => {
   const handleWithdraw = async (e) => {
     e.preventDefault();
     const withdrawAmount = parseInt(amount);
+    const totalAvailable = (Number(user.balance) || 0) + (Number(user.investedAmount) || 0);
 
-    if (withdrawAmount > user.balance) {
+    if (withdrawAmount > totalAvailable) {
       alert('Insufficient balance!');
       return;
     }
@@ -71,7 +72,7 @@ const Withdraw = ({ user, setUser, theme }) => {
             <Wallet size={20} color="var(--primary)" /> Available Balance
           </h3>
           <h2 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '10px' }}>
-            <span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--text-dim)' }}>PKR</span> {user.balance.toLocaleString()}
+            <span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--text-dim)' }}>PKR</span> {((Number(user.balance) || 0) + (Number(user.investedAmount) || 0)).toLocaleString()}
           </h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>Withdrawal takes 24-48 hours to process.</p>
         </motion.div>
