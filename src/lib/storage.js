@@ -8,11 +8,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const getCurrentUser = async () => {
   const userId = localStorage.getItem('current_user_id');
   if (!userId) return null;
-  const { data: stData } = await supabase.from('users').select('*').eq('id', userId).single();
+  const { data: stData } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
   if (!stData) return null;
 
-  const { data: settings } = await supabase.from('settings').select('value').eq('key', 'global_settings').maybeSingle();
-  const dailyProfitPercent = settings?.value?.dailyProfitPercent || 2;
+  const { data: request } = await supabase.from('investment_requests').select('id').eq('user_id', userId).eq('status', 'pending').limit(1).maybeSingle();
+  const { data: settingsData } = await supabase.from('settings').select('value').eq('id', 1).maybeSingle();
+  const dailyProfitPercent = settingsData?.value?.dailyProfitPercent || 2;
 
   return {
     ...stData,
@@ -52,8 +53,9 @@ export const login = async (username, password) => {
   if (error || !data) return null;
   localStorage.setItem('current_user_id', data.id);
 
-  const { data: settings } = await supabase.from('settings').select('value').eq('key', 'global_settings').maybeSingle();
-  const dailyProfitPercent = settings?.value?.dailyProfitPercent || 2;
+  const { data: request } = await supabase.from('investment_requests').select('id').eq('user_id', data.id).eq('status', 'pending').limit(1).maybeSingle();
+  const { data: settingsData } = await supabase.from('settings').select('value').eq('id', 1).maybeSingle();
+  const dailyProfitPercent = settingsData?.value?.dailyProfitPercent || 2;
 
   return {
     ...data,
