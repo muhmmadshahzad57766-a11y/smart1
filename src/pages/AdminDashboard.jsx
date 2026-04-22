@@ -956,6 +956,31 @@ const AdminDashboard = ({ theme }) => {
                           style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'var(--text-main)' }}
                         />
                       </div>
+                      <div>
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>Daily Profit Percentage (%)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          className="glass"
+                          value={settings.dailyProfitPercent || ''}
+                          onChange={(e) => {
+                            setSettings({ ...settings, dailyProfitPercent: parseFloat(e.target.value) || 0 });
+                          }}
+                          style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'var(--text-main)' }}
+                        />
+                      </div>
+                      <div style={{ gridColumn: 'span 2' }}>
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>About Us Message</label>
+                        <textarea
+                          className="glass"
+                          value={settings.aboutMessage || ''}
+                          onChange={(e) => {
+                            setSettings({ ...settings, aboutMessage: e.target.value });
+                          }}
+                          style={{ width: '100%', padding: '12px', marginTop: '5px', color: 'var(--text-main)', minHeight: '120px', resize: 'vertical' }}
+                          placeholder="Tell your members about your platform..."
+                        />
+                      </div>
                     </div>
                   </div>
 

@@ -11,17 +11,12 @@ export const getCurrentUser = async () => {
   const { data: stData } = await supabase.from('users').select('*').eq('id', userId).single();
   if (!stData) return null;
 
-  const { data: request } = await supabase.from('investment_requests').select('id').eq('user_id', userId).eq('status', 'pending').limit(1).maybeSingle();
-
-  // Calculate total daily reward
-  const { data: approvedRequests } = await supabase.from('investment_requests').select('plan_id').eq('user_id', userId).eq('status', 'approved');
-  const { data: plans } = await supabase.from('plans').select('id, daily_reward');
-  const planMap = new Map(plans?.map(p => [p.id, p.daily_reward]) || []);
-  const totalDailyReward = approvedRequests?.reduce((sum, req) => sum + Number(planMap.get(req.plan_id) || 0), 0) || 0;
+  const { data: settings } = await supabase.from('settings').select('value').eq('key', 'global_settings').maybeSingle();
+  const dailyProfitPercent = settings?.value?.dailyProfitPercent || 2;
 
   return {
     ...stData,
-    investedAmount: stData.invested_amount,
+    investedAmount: stData.invested_amount || 0,
     referralCode: stData.referral_code,
     referredBy: stData.referred_by,
     referralEarnings: stData.referral_earnings,
@@ -29,7 +24,7 @@ export const getCurrentUser = async () => {
     planId: stData.current_plan_id,
     planStartTime: stData.plan_start_time,
     balance: stData.balance || 0,
-    dailyReward: totalDailyReward,
+    dailyReward: (stData.invested_amount || 0) * (dailyProfitPercent / 100),
     hasPendingInvestment: !!request
   };
 };
@@ -57,24 +52,19 @@ export const login = async (username, password) => {
   if (error || !data) return null;
   localStorage.setItem('current_user_id', data.id);
 
-  const { data: request } = await supabase.from('investment_requests').select('id').eq('user_id', data.id).eq('status', 'pending').limit(1).maybeSingle();
-
-  // Calculate total daily reward
-  const { data: approvedRequests } = await supabase.from('investment_requests').select('plan_id').eq('user_id', data.id).eq('status', 'approved');
-  const { data: plans } = await supabase.from('plans').select('id, daily_reward');
-  const planMap = new Map(plans?.map(p => [p.id, p.daily_reward]) || []);
-  const totalDailyReward = approvedRequests?.reduce((sum, req) => sum + Number(planMap.get(req.plan_id) || 0), 0) || 0;
+  const { data: settings } = await supabase.from('settings').select('value').eq('key', 'global_settings').maybeSingle();
+  const dailyProfitPercent = settings?.value?.dailyProfitPercent || 2;
 
   return {
     ...data,
-    investedAmount: data.invested_amount,
+    investedAmount: data.invested_amount || 0,
     referralCode: data.referral_code,
     referredBy: data.referred_by,
     referralEarnings: data.referral_earnings,
     referralCount: data.referral_count,
     planId: data.current_plan_id,
     planStartTime: data.plan_start_time,
-    dailyReward: totalDailyReward,
+    dailyReward: (data.invested_amount || 0) * (dailyProfitPercent / 100),
     hasPendingInvestment: !!request
   };
 };
@@ -152,60 +142,26 @@ export const deleteUser = async (userId) => {
 
 // Getting Settings
 export const getSettings = async () => {
-  const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single();
-  if (error || !data) {
-    return {
-      themeColor: '#4facfe',
-      theme: 'dark',
-      referralRewardPercent: 10,
-      minWithdrawal: 500,
-      siteName: 'InvestSmart',
-      adminWallets: [
-        { id: 'easypaisa', title: 'Easypaisa', accounts: [] },
-        { id: 'jazzcash', title: 'JazzCash', accounts: [] }
-      ]
-    };
-  }
-
-  let adminWallets = data.admin_wallets || {};
-
-  // Migration: If it's an object (old format), convert to array
-  if (!Array.isArray(adminWallets)) {
-    const migrated = [];
-    if (adminWallets.easypaisa) {
-      migrated.push({ id: 'easypaisa', title: 'Easypaisa', accounts: adminWallets.easypaisa });
-    } else {
-      migrated.push({ id: 'easypaisa', title: 'Easypaisa', accounts: [] });
-    }
-
-    if (adminWallets.jazzcash) {
-      migrated.push({ id: 'jazzcash', title: 'JazzCash', accounts: adminWallets.jazzcash });
-    } else {
-      migrated.push({ id: 'jazzcash', title: 'JazzCash', accounts: [] });
-    }
-    adminWallets = migrated;
-  }
-
-  return {
-    themeColor: data.theme_color,
-    theme: data.theme,
-    referralRewardPercent: data.referral_reward_percent,
-    minWithdrawal: data.min_withdrawal || 500,
-    siteName: data.site_name || 'InvestSmart',
-    adminWallets: adminWallets
+  const { data, error } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle();
+  const defaults = {
+    themeColor: '#4facfe',
+    theme: 'dark',
+    referralRewardPercent: 10,
+    minWithdrawal: 500,
+    siteName: 'InvestSmart',
+    dailyProfitPercent: 2,
+    aboutMessage: "Welcome to our investment portal. We provide secure and profitable investment opportunities.",
+    adminWallets: []
   };
+
+  if (error || !data) return defaults;
+  return { ...defaults, ...data.value };
 };
 
 export const updateSettings = async (newSettings) => {
-  const payload = {};
-  if (newSettings.themeColor !== undefined) payload.theme_color = newSettings.themeColor;
-  if (newSettings.theme !== undefined) payload.theme = newSettings.theme;
-  if (newSettings.referralRewardPercent !== undefined) payload.referral_reward_percent = newSettings.referralRewardPercent;
-  if (newSettings.minWithdrawal !== undefined) payload.min_withdrawal = newSettings.minWithdrawal;
-  if (newSettings.siteName !== undefined) payload.site_name = newSettings.siteName;
-  if (newSettings.adminWallets !== undefined) payload.admin_wallets = newSettings.adminWallets;
-
-  const { data } = await supabase.from('settings').update(payload).eq('id', 1).select().single();
+  const { data: current } = await supabase.from('settings').select('value').eq('id', 1).maybeSingle();
+  const updatedValue = { ...(current?.value || {}), ...newSettings };
+  const { data } = await supabase.from('settings').update({ value: updatedValue }).eq('id', 1).select().single();
   return data;
 };
 
@@ -394,17 +350,14 @@ export const calculateRewards = async (userId) => {
   const { data: user } = await supabase.from('users').select('*').eq('id', userId).single();
   if (!user) return null;
 
-  // Fetch all approved plans to calculate cumulative daily reward
-  const { data: approvedRequests } = await supabase.from('investment_requests').select('plan_id').eq('user_id', userId).eq('status', 'approved');
+  // Percentage based reward calculation
+  const { data: settings } = await supabase.from('settings').select('value').eq('key', 'global_settings').maybeSingle();
+  const dailyProfitPercent = settings?.value?.dailyProfitPercent || 2;
 
-  if (!approvedRequests || approvedRequests.length === 0) return null;
+  const investedAmount = Number(user.invested_amount || 0);
+  if (investedAmount <= 0) return null;
 
-  const { data: plans } = await supabase.from('plans').select('*');
-  const planMap = new Map(plans.map(p => [p.id, p.daily_reward]));
-
-  const totalDailyReward = approvedRequests.reduce((sum, req) => sum + Number(planMap.get(req.plan_id) || 0), 0);
-
-  if (totalDailyReward <= 0) return null;
+  const totalDailyReward = investedAmount * (dailyProfitPercent / 100);
 
   // Retrieve last reward timestamp. If none, use plan_start_time
   const { data: lastReward } = await supabase.from('rewards')
