@@ -12,8 +12,8 @@ export const getCurrentUser = async () => {
   if (!stData) return null;
 
   const { data: request } = await supabase.from('investment_requests').select('id').eq('user_id', userId).eq('status', 'pending').limit(1).maybeSingle();
-  const { data: settingsData } = await supabase.from('settings').select('value').eq('id', 1).maybeSingle();
-  const dailyProfitPercent = settingsData?.value?.dailyProfitPercent || 2;
+  const settings = await getSettings();
+  const dailyProfitPercent = settings.dailyProfitPercent || 2;
 
   return {
     ...stData,
@@ -54,8 +54,8 @@ export const login = async (username, password) => {
   localStorage.setItem('current_user_id', data.id);
 
   const { data: request } = await supabase.from('investment_requests').select('id').eq('user_id', data.id).eq('status', 'pending').limit(1).maybeSingle();
-  const { data: settingsData } = await supabase.from('settings').select('value').eq('id', 1).maybeSingle();
-  const dailyProfitPercent = settingsData?.value?.dailyProfitPercent || 2;
+  const settings = await getSettings();
+  const dailyProfitPercent = settings.dailyProfitPercent || 2;
 
   return {
     ...data,
@@ -157,26 +157,49 @@ export const getSettings = async () => {
   };
 
   if (error || !data) return defaults;
-  const val = data.value || {};
 
-  // Ensure adminWallets is an array
-  let adminWallets = val.adminWallets;
-  if (adminWallets && !Array.isArray(adminWallets)) {
-    // Convert object {easypaisa: [], ...} to array [{id: 'easypaisa', title: 'Easypaisa', accounts: []}, ...]
-    adminWallets = Object.entries(adminWallets).map(([id, accounts]) => ({
-      id,
-      title: id.charAt(0).toUpperCase() + id.slice(1),
-      accounts: Array.isArray(accounts) ? accounts : []
-    }));
+  let adminWallets = data.admin_wallets || [];
+  let dailyProfitPercent = defaults.dailyProfitPercent;
+  let aboutMessage = defaults.aboutMessage;
+
+  // Handle hybrid storage in admin_wallets column
+  if (adminWallets && !Array.isArray(adminWallets) && typeof adminWallets === 'object') {
+    dailyProfitPercent = adminWallets.dailyProfitPercent || dailyProfitPercent;
+    aboutMessage = adminWallets.aboutMessage || aboutMessage;
+    adminWallets = adminWallets.wallets || [];
   }
 
-  return { ...defaults, ...val, adminWallets: adminWallets || [] };
+  return {
+    ...defaults,
+    themeColor: data.theme_color || defaults.themeColor,
+    theme: data.theme || defaults.theme,
+    referralRewardPercent: data.referral_reward_percent || defaults.referralRewardPercent,
+    minWithdrawal: data.min_withdrawal || defaults.minWithdrawal,
+    siteName: data.site_name || defaults.siteName,
+    dailyProfitPercent,
+    aboutMessage,
+    adminWallets: Array.isArray(adminWallets) ? adminWallets : []
+  };
 };
 
-export const updateSettings = async (newSettings) => {
-  const { data: current } = await supabase.from('settings').select('value').eq('id', 1).maybeSingle();
-  const updatedValue = { ...(current?.value || {}), ...newSettings };
-  const { data } = await supabase.from('settings').upsert({ id: 1, value: updatedValue }).select().maybeSingle();
+// Updating Settings
+export const updateSettings = async (s) => {
+  const walletsData = {
+    wallets: s.adminWallets,
+    dailyProfitPercent: s.dailyProfitPercent,
+    aboutMessage: s.aboutMessage
+  };
+
+  const { data } = await supabase.from('settings').upsert({
+    id: 1,
+    theme_color: s.themeColor,
+    theme: s.theme,
+    referral_reward_percent: s.referralRewardPercent,
+    min_withdrawal: s.minWithdrawal,
+    site_name: s.siteName,
+    admin_wallets: walletsData
+  }).select().maybeSingle();
+
   return data;
 };
 
@@ -366,8 +389,8 @@ export const calculateRewards = async (userId) => {
   if (!user) return null;
 
   // Percentage based reward calculation
-  const { data: settingsData } = await supabase.from('settings').select('value').eq('id', 1).maybeSingle();
-  const dailyProfitPercent = settingsData?.value?.dailyProfitPercent || 2;
+  const settings = await getSettings();
+  const dailyProfitPercent = settings.dailyProfitPercent || 2;
 
   const investedAmount = Number(user.invested_amount || 0);
   if (investedAmount <= 0) return null;
