@@ -157,7 +157,20 @@ export const getSettings = async () => {
   };
 
   if (error || !data) return defaults;
-  return { ...defaults, ...data.value };
+  const val = data.value || {};
+
+  // Ensure adminWallets is an array
+  let adminWallets = val.adminWallets;
+  if (adminWallets && !Array.isArray(adminWallets)) {
+    // Convert object {easypaisa: [], ...} to array [{id: 'easypaisa', title: 'Easypaisa', accounts: []}, ...]
+    adminWallets = Object.entries(adminWallets).map(([id, accounts]) => ({
+      id,
+      title: id.charAt(0).toUpperCase() + id.slice(1),
+      accounts: Array.isArray(accounts) ? accounts : []
+    }));
+  }
+
+  return { ...defaults, ...val, adminWallets: adminWallets || [] };
 };
 
 export const updateSettings = async (newSettings) => {
@@ -353,8 +366,8 @@ export const calculateRewards = async (userId) => {
   if (!user) return null;
 
   // Percentage based reward calculation
-  const { data: settings } = await supabase.from('settings').select('value').eq('key', 'global_settings').maybeSingle();
-  const dailyProfitPercent = settings?.value?.dailyProfitPercent || 2;
+  const { data: settingsData } = await supabase.from('settings').select('value').eq('id', 1).maybeSingle();
+  const dailyProfitPercent = settingsData?.value?.dailyProfitPercent || 2;
 
   const investedAmount = Number(user.invested_amount || 0);
   if (investedAmount <= 0) return null;

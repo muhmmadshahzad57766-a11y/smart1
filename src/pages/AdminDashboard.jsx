@@ -49,7 +49,7 @@ const AdminDashboard = ({ theme }) => {
   const [plans, setPlans] = useState([]);
   const [investmentRequests, setInvestmentRequests] = useState([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState([]);
-  const [settings, setSettings] = useState({ adminWallets: { easypaisa: {}, jazzcash: {} } });
+  const [settings, setSettings] = useState({ adminWallets: [] });
   const [loading, setLoading] = useState(true);
   const [dirtyPlans, setDirtyPlans] = useState({}); // { planId: { updates } }
 
