@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Home, PieChart, Shield, Wallet, Menu, X, Sun, Moon } from 'lucide-react';
+import { LogOut, Home, PieChart, Shield, Wallet, Menu, X, Sun, Moon, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
@@ -14,8 +14,9 @@ const Navbar = ({ user, onLogout, theme, onToggleTheme, siteName }) => {
       ? [{ path: '/admin', label: 'Admin', icon: <Shield size={20} /> }]
       : [
         { path: '/dashboard', label: 'Dashboard', icon: <Home size={20} /> },
-        { path: '/plans', label: 'Plans', icon: <PieChart size={20} /> },
+        { path: '/plans', label: 'Invest', icon: <PieChart size={20} /> },
         { path: '/withdraw', label: 'Withdraw', icon: <Wallet size={20} /> },
+        { path: '/about', label: 'About', icon: <Info size={20} /> },
       ])
     : [];
 

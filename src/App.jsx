@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Plans from './pages/Plans';
 import Withdraw from './pages/Withdraw';
 import SupportChat from './components/SupportChat';
+import About from './pages/About';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -123,6 +124,7 @@ function App() {
           />
           <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard theme={theme} /> : <Navigate to="/login" />} />
           <Route path="/plans" element={user ? <Plans user={user} setUser={setUser} theme={theme} /> : <Navigate to="/login" />} />
+          <Route path="/about" element={<About theme={theme} />} />
           <Route
             path="/withdraw"
             element={

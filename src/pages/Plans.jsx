@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchPlans, addInvestmentRequest, getSettings, uploadScreenshot } from '../lib/storage';
+import { addInvestmentRequest, getSettings, uploadScreenshot } from '../lib/storage';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle,
@@ -9,23 +9,24 @@ import {
   Copy,
   ShieldCheck,
   ShieldAlert,
-  Camera
+  Camera,
+  DollarSign,
+  TrendingUp,
+  Wallet
 } from 'lucide-react';
 
 const Plans = ({ user, setUser, theme }) => {
   const isDark = theme === 'dark';
   const navigate = useNavigate();
-  const [plans, setPlans] = useState([]);
-  const [settings, setSettings] = useState({ adminWallets: { easypaisa: {}, jazzcash: {} } });
-  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [amount, setAmount] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
-    method: 'easypaisa',
+    method: '',
     senderAccountName: '',
     senderAccountNo: '',
-    amountSent: '',
     transactionId: '',
     screenshot: ''
   });
@@ -34,16 +35,9 @@ const Plans = ({ user, setUser, theme }) => {
 
   useEffect(() => {
     const init = async () => {
-      const [fetchedPlans, appSettings] = await Promise.all([
-        fetchPlans(),
-        getSettings()
-      ]);
-      setPlans(fetchedPlans);
-
-      // Fix missing nested objects
-      if (!appSettings.adminWallets) appSettings.adminWallets = { easypaisa: {}, jazzcash: {} };
+      const appSettings = await getSettings();
       setSettings(appSettings);
-      setLoadingConfig(false);
+      setLoading(false);
     };
     init();
   }, []);
@@ -53,7 +47,6 @@ const Plans = ({ user, setUser, theme }) => {
     if (!file) return;
     setScreenshotFile(file);
 
-    // Use Canvas to compress image for the preview only
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -61,7 +54,7 @@ const Plans = ({ user, setUser, theme }) => {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        const MAX_WIDTH = 400; // Smaller preview
+        const MAX_WIDTH = 400;
         if (width > MAX_WIDTH) {
           height *= MAX_WIDTH / width;
           width = MAX_WIDTH;
@@ -78,15 +71,18 @@ const Plans = ({ user, setUser, theme }) => {
     reader.readAsDataURL(file);
   };
 
-  const handleInvestClick = (plan) => {
-    setSelectedPlan(plan);
-    setFormData({ ...formData, amountSent: plan.price.toString() });
+  const handleInvestStep = () => {
+    const num = Number(amount);
+    if (!num || num < (settings?.minInvestment || 500)) {
+      alert(`Minimum investment is PKR ${settings?.minInvestment || 500}`);
+      return;
+    }
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.senderAccountName || !formData.senderAccountNo || !formData.transactionId || !formData.amountSent) {
+    if (!formData.senderAccountName || !formData.senderAccountNo || !formData.transactionId || !formData.method) {
       alert('Please fill all required fields');
       return;
     }
@@ -100,75 +96,82 @@ const Plans = ({ user, setUser, theme }) => {
     }
 
     await addInvestmentRequest(user.id, {
-      planId: selectedPlan.id,
-      planName: selectedPlan.name,
+      planId: 'custom',
+      planName: `Investment: ${amount}`,
       ...formData,
       screenshot: screenshotUrl,
-      amountSent: parseInt(formData.amountSent)
+      amountSent: parseInt(amount)
     });
 
     setUser({ ...user, hasPendingInvestment: true });
-
     setSubmitting(false);
     setShowModal(false);
-    setSelectedPlan(null);
     alert('Your investment request has been submitted. Admin will verify it shortly.');
     navigate('/dashboard');
   };
 
-  if (loadingConfig) return <div style={{ textAlign: 'center', padding: '50px' }}>Loading...</div>;
+  if (loading) return <div style={{ textAlign: 'center', padding: '100px', color: 'var(--text-dim)' }}>Loading...</div>;
+
+  const estimatedProfit = (Number(amount) * (settings.dailyProfitPercent / 100)).toFixed(2);
 
   return (
-    <div style={{ padding: 'clamp(20px, 5vw, 60px) 20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-        <h1 style={{ fontSize: 'clamp(1.8rem, 6vw, 3rem)', fontWeight: 800, marginBottom: '15px' }}>Premium <span className="gradient-text">Investment Plans</span></h1>
-        <p style={{ color: 'var(--text-dim)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto' }}>Select a strategic portfolio and grow your wealth with daily rewards.</p>
+    <div style={{ padding: 'clamp(20px, 5vw, 60px) 20px', maxWidth: '1000px', margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <h1 style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)', fontWeight: 800, marginBottom: '15px' }}>
+          Grow Your <span className="text-gradient">Wealth</span>
+        </h1>
+        <p style={{ color: 'var(--text-dim)', fontSize: '1.2rem' }}>
+          Enter the amount you wish to invest and earn <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{settings.dailyProfitPercent}%</span> daily reward.
+        </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '25px' }}>
-        {plans.map((plan) => (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="glass"
+        style={{ padding: 'clamp(20px, 5vw, 50px)', borderRadius: '32px', maxWidth: '600px', margin: '0 auto' }}
+      >
+        <div style={{ marginBottom: '30px' }}>
+          <label style={{ display: 'block', marginBottom: '12px', fontSize: '0.9rem', color: 'var(--text-dim)', fontWeight: 600 }}>Investment Amount (PKR)</label>
+          <div style={{ position: 'relative' }}>
+            <Wallet size={20} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+            <input
+              type="number"
+              className="glass"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="e.g. 5000"
+              style={{ width: '100%', padding: '18px 18px 18px 50px', fontSize: '1.2rem', fontWeight: 700, borderRadius: '20px' }}
+            />
+          </div>
+        </div>
+
+        {Number(amount) > 0 && (
           <motion.div
-            key={plan.id}
-            whileHover={{ y: -10 }}
-            className={`card glass ${user.planId === plan.id ? 'active-plan' : ''}`}
-            style={{
-              padding: '40px',
-              border: user.planId === plan.id ? '2px solid var(--primary)' : '1px solid var(--glass-border)',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            style={{ padding: '20px', background: 'var(--surface-light)', borderRadius: '20px', marginBottom: '30px', border: '1px solid var(--glass-border)' }}
           >
-            {user.planId === plan.id && (
-              <div style={{ background: 'var(--primary)', color: 'black', padding: '5px 15px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 800, width: 'fit-content', marginBottom: '15px' }}>
-                ACTIVE NOW
-              </div>
-            )}
-
-            <h3 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '5px' }}>{plan.name}</h3>
-            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-main)', margin: '20px 0' }}>
-              <span style={{ fontSize: '1.2rem', fontWeight: 400, color: 'var(--text-dim)' }}>PKR</span> {plan.price.toLocaleString()}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>Daily Estimated Reward:</span>
+              <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent-green)' }}>PKR {estimatedProfit}</span>
             </div>
-
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '20px', marginBottom: '30px' }}>
-              <div style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginBottom: '5px' }}>Daily ROI</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--accent-green)' }}>PKR {plan.dailyReward}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>Monthly Growth:</span>
+              <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>PKR {(estimatedProfit * 30).toLocaleString()}</span>
             </div>
-
-            <button
-              onClick={() => handleInvestClick(plan)}
-              disabled={user.planId === plan.id}
-              className={user.planId === plan.id ? 'glass' : 'gradient-btn'}
-              style={{ width: '100%', padding: '16px', borderRadius: '15px', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-            >
-              {user.planId === plan.id ? 'Already Subscribed' : (
-                <>Start Investing <ArrowRight size={18} /></>
-              )}
-            </button>
           </motion.div>
-        ))}
-      </div>
+        )}
 
-      {/* Investment & Payment Proof Modal */}
+        <button
+          onClick={handleInvestStep}
+          className="gradient-btn"
+          style={{ width: '100%', padding: '20px', borderRadius: '20px', fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+        >
+          Proceed to Payment <ArrowRight size={20} />
+        </button>
+      </motion.div>
+
       <AnimatePresence>
         {showModal && (
           <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -183,117 +186,76 @@ const Plans = ({ user, setUser, theme }) => {
                 maxHeight: '90vh',
                 overflowY: 'auto',
                 borderRadius: '24px',
-                padding: 'clamp(15px, 5vw, 40px)',
-                border: '1px solid var(--glass-border)',
+                padding: 'clamp(20px, 5vw, 40px)',
                 position: 'relative'
               }}
             >
-              <button onClick={() => setShowModal(false)} style={{ position: 'absolute', top: '30px', right: '30px', background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer' }}>
-                <X size={30} />
+              <button onClick={() => setShowModal(false)} style={{ position: 'absolute', top: '25px', right: '25px', background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer' }}>
+                <X size={28} />
               </button>
 
               <div className="modal-grid">
-                {/* Left: Admin Details */}
                 <div>
-                  <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '10px' }}>Step 1: Payment</h2>
-                  <p style={{ color: 'var(--text-dim)', marginBottom: '30px' }}>Please send the plan amount to one of the following accounts.</p>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '10px' }}>Step 1: Payment</h2>
+                  <p style={{ color: 'var(--text-dim)', marginBottom: '25px' }}>Send exactly <b>PKR {Number(amount).toLocaleString()}</b> to an account below.</p>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      {Array.isArray(settings.adminWallets) && settings.adminWallets.map((cat, idx) => (
-                        <div key={cat.id || idx} style={{ padding: '25px', background: 'var(--surface-light)', borderRadius: '24px', border: '1px solid var(--glass-border)' }}>
-                          <div style={{ color: 'var(--primary)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '15px' }}>{cat.title} Accounts</div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                            {cat.accounts?.length > 0 ? cat.accounts.map((acc, i) => (
-                              <div key={i} style={{ padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
-                                <div style={{ fontSize: '1.2rem', fontWeight: 700, margin: '5px 0', display: 'flex', justifyContent: 'space-between' }}>
-                                  <span>{acc.number}</span>
-                                  <Copy size={16} style={{ cursor: 'pointer', color: 'var(--primary)' }} onClick={() => { navigator.clipboard.writeText(acc.number); alert('Number copied!'); }} />
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Name: {acc.name}</div>
-                              </div>
-                            )) : <div style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>Contact admin for details.</div>}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    {settings.adminWallets.map((cat, idx) => (
+                      <div key={idx} style={{ padding: '20px', background: 'var(--surface-light)', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
+                        <div style={{ color: 'var(--primary)', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '10px' }}>{cat.title}</div>
+                        {cat.accounts.map((acc, i) => (
+                          <div key={i} style={{ padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontWeight: 700 }}>{acc.number}</span>
+                              <Copy size={14} style={{ cursor: 'pointer', color: 'var(--primary)' }} onClick={() => { navigator.clipboard.writeText(acc.number); alert('Copied!'); }} />
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Name: {acc.name}</div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: '30px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '20px', borderLeft: '4px solid var(--primary)' }}>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', lineHeight: '1.6' }}>
-                      <b>Important:</b> Always double check the account details and ensure you send exactly <b>PKR {selectedPlan?.price.toLocaleString()}</b>.
-                    </p>
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Right: Submission Form */}
-                <div>
-                  <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '10px' }}>Step 2: Proof</h2>
-                  <p style={{ color: 'var(--text-dim)', marginBottom: '30px' }}>Submit your transaction details for verification.</p>
-
-                  <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Step 2: Proof</h2>
+                  <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <div>
-                      <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', display: 'block', marginBottom: '8px' }}>Payment Method Used</label>
-                      <select className="glass" value={formData.method} onChange={e => setFormData({ ...formData, method: e.target.value })} style={{ width: '100%', padding: '14px', color: 'var(--text-main)', background: 'var(--surface-light)' }}>
-                        <option value="">Select Method</option>
-                        {Array.isArray(settings.adminWallets) && settings.adminWallets.map(cat => (
-                          <option key={cat.id} value={cat.title}>{cat.title}</option>
-                        ))}
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-dim)', display: 'block', marginBottom: '6px' }}>Method Used</label>
+                      <select className="glass" value={formData.method} onChange={e => setFormData({ ...formData, method: e.target.value })} style={{ width: '100%', padding: '12px' }}>
+                        <option value="">Select Category</option>
+                        {settings.adminWallets.map(c => <option key={c.id} value={c.title}>{c.title}</option>)}
                       </select>
                     </div>
 
-                    <div className="form-grid">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                       <div>
-                        <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', display: 'block', marginBottom: '8px' }}>Account Name</label>
-                        <input className="glass" placeholder="Your Name" value={formData.senderAccountName} onChange={e => setFormData({ ...formData, senderAccountName: e.target.value })} style={{ width: '100%', padding: '14px', color: 'var(--text-main)' }} />
+                        <label style={{ fontSize: '0.85rem', color: 'var(--text-dim)', display: 'block', marginBottom: '6px' }}>Account Name</label>
+                        <input className="glass" placeholder="Your Name" value={formData.senderAccountName} onChange={e => setFormData({ ...formData, senderAccountName: e.target.value })} style={{ width: '100%', padding: '12px' }} />
                       </div>
                       <div>
-                        <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', display: 'block', marginBottom: '8px' }}>Account No</label>
-                        <input className="glass" placeholder="03XXXXXXXXX" value={formData.senderAccountNo} onChange={e => setFormData({ ...formData, senderAccountNo: e.target.value })} style={{ width: '100%', padding: '14px', color: 'var(--text-main)' }} />
+                        <label style={{ fontSize: '0.85rem', color: 'var(--text-dim)', display: 'block', marginBottom: '6px' }}>Account No</label>
+                        <input className="glass" placeholder="03XXXX" value={formData.senderAccountNo} onChange={e => setFormData({ ...formData, senderAccountNo: e.target.value })} style={{ width: '100%', padding: '12px' }} />
                       </div>
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', display: 'block', marginBottom: '8px' }}>Transaction ID (TRX)</label>
-                      <input className="glass" placeholder="e.g. 192837465" value={formData.transactionId} onChange={e => setFormData({ ...formData, transactionId: e.target.value })} style={{ width: '100%', padding: '14px', color: 'var(--text-main)' }} />
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-dim)', display: 'block', marginBottom: '6px' }}>Transaction ID</label>
+                      <input className="glass" placeholder="TRX ID" value={formData.transactionId} onChange={e => setFormData({ ...formData, transactionId: e.target.value })} style={{ width: '100%', padding: '12px' }} />
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', display: 'block', marginBottom: '8px' }}>Payment Screenshot</label>
-                      <div style={{ position: 'relative', display: 'block', width: '100%' }}>
-                        {/* The input MUST be on top of the UI to be clickable */}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            opacity: 0,
-                            zIndex: 10,
-                            cursor: 'pointer'
-                          }}
-                        />
-                        <div className="glass" style={{ padding: '20px', textAlign: 'center', borderStyle: 'solid', borderWidth: '2px', borderStyle: 'dashed', borderColor: 'var(--glass-border)', pointerEvents: 'none' }}>
-                          {formData.screenshot ? (
-                            <img src={formData.screenshot} style={{ width: '100%', maxHeight: '150px', borderRadius: '10px', objectFit: 'contain' }} />
-                          ) : (
-                            <div style={{ color: 'var(--text-dim)' }}>
-                              <Camera size={30} style={{ marginBottom: '10px' }} />
-                              <div>Click to upload proof</div>
-                            </div>
-                          )}
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-dim)', display: 'block', marginBottom: '6px' }}>Screenshot</label>
+                      <div style={{ position: 'relative' }}>
+                        <input type="file" accept="image/*" onChange={handleImageUpload} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} />
+                        <div className="glass" style={{ padding: '15px', textAlign: 'center', borderStyle: 'dashed', borderWidth: '2px' }}>
+                          {formData.screenshot ? <img src={formData.screenshot} style={{ maxHeight: '100px' }} /> : <Camera size={24} />}
                         </div>
                       </div>
                     </div>
 
-                    <button type="submit" disabled={submitting} className="gradient-btn" style={{ padding: '18px', width: '100%', marginTop: '10px', fontSize: '1.1rem', fontWeight: 700 }}>
-                      {submitting ? 'Submitting Request...' : (
-                        <>Submit Verification Proof <ShieldCheck size={20} style={{ marginLeft: '10px' }} /></>
-                      )}
+                    <button type="submit" disabled={submitting} className="gradient-btn" style={{ padding: '15px', fontSize: '1rem', marginTop: '10px' }}>
+                      {submitting ? 'Submitting...' : 'Submit Proof'}
                     </button>
                   </form>
                 </div>
@@ -304,34 +266,13 @@ const Plans = ({ user, setUser, theme }) => {
       </AnimatePresence>
 
       <style>{`
-        .active-plan {
-          box-shadow: 0 0 40px rgba(79, 172, 254, 0.2);
-          background: rgba(79, 172, 254, 0.05) !important;
-        }
-        select option {
-           background: var(--bg-dark);
-           color: var(--text-main);
-        }
-
         .modal-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(clamp(280px, 45%, 400px), 1fr));
-          gap: clamp(20px, 5vw, 40px);
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 30px;
         }
-
-        .form-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
-          gap: 15px;
-        }
-
         @media (max-width: 480px) {
-          .active-plan {
-            padding: 25px !important;
-          }
-           .form-grid {
-            grid-template-columns: 1fr;
-          }
+          .modal-grid { grid-template-columns: 1fr; }
         }
       `}</style>
     </div>
