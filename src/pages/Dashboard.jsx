@@ -148,9 +148,6 @@ const Dashboard = ({ user, setUser, theme }) => {
               <span style={{ fontWeight: 800 }}>{user.username}</span>
             </h1>
           </div>
-          <button className="mobile-only" style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
-            <Menu size={32} />
-          </button>
         </div>
 
         {/* Welcome Message */}
@@ -352,63 +349,6 @@ const Dashboard = ({ user, setUser, theme }) => {
           </div>
         </div>
 
-        {/* Mobile-Only Bottom Nav */}
-        <div
-          className="mobile-only"
-          style={{
-            position: 'fixed',
-            bottom: '30px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 'calc(100% - 60px)',
-            maxWidth: '480px',
-            background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(20px)',
-            padding: '16px',
-            borderRadius: '32px',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '15px',
-            zIndex: 1000,
-            border: '1px solid var(--glass-border)'
-          }}
-        >
-          <button style={{ background: 'none', border: 'none', color: 'var(--text-main)', padding: '10px' }}>
-            <Menu size={26} />
-          </button>
-          <button
-            onClick={() => window.location.href = '/plans'}
-            style={{ flex: 1, padding: '18px', borderRadius: '20px', fontWeight: 800, fontSize: '1rem', background: 'var(--surface-light)', color: 'var(--text-main)', border: 'none', cursor: 'pointer' }}
-          >
-            Deposit
-          </button>
-          <button
-            onClick={() => window.location.href = '/withdraw'}
-            style={{
-              flex: 1,
-              padding: '18px',
-              borderRadius: '20px',
-              fontWeight: 800,
-              fontSize: '1rem',
-              background: 'linear-gradient(135deg, #2dd4bf, #3b82f6)',
-              color: 'white',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 8px 20px rgba(45, 212, 191, 0.4)'
-            }}
-          >
-            Withdraw
-          </button>
-        </div>
-
-        <style>{`
-          @media (min-width: 769px) {
-            .mobile-only {
-              display: none !important;
-            }
-          }
-        `}</style>
 
       </div>
     </div>
