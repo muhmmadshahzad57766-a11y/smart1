@@ -7,12 +7,11 @@ import {
 } from '../lib/storage';
 import { motion } from 'framer-motion';
 import {
-  Menu,
-  TrendingUp,
-  History
+  Menu
 } from 'lucide-react';
 
 const Dashboard = ({ user, setUser, theme }) => {
+  const isDark = theme === 'dark';
   const [settings, setSettings] = useState(null);
   const [userRewards, setUserRewards] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +54,6 @@ const Dashboard = ({ user, setUser, theme }) => {
 
     const totalProfit = userRewards.reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
 
-    // Prepare chart data (last 7 days as in image: Sun, Mon, Tue...)
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const chartData = [];
     for (let i = 6; i >= 0; i--) {
@@ -70,7 +68,7 @@ const Dashboard = ({ user, setUser, theme }) => {
     return { todayProfit, yesterdayProfit, totalProfit, chartData };
   }, [userRewards]);
 
-  if (!user || loading) return <div style={{ padding: '50px', textAlign: 'center', color: '#14b8a6' }}>Initializing Dashboard...</div>;
+  if (!user || loading) return <div style={{ padding: '50px', textAlign: 'center', color: 'var(--primary)' }}>Initializing Dashboard...</div>;
 
   const ChartSVG = ({ data }) => {
     if (!data || data.length === 0) return null;
@@ -92,15 +90,15 @@ const Dashboard = ({ user, setUser, theme }) => {
       <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto' }}>
         <defs>
           <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#14b8a6" stopOpacity="0.1" />
-            <stop offset="100%" stopColor="#14b8a6" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
           </linearGradient>
         </defs>
         <polygon points={areaPoints} fill="url(#chartFill)" />
         <polyline
           fill="none"
-          stroke="#14b8a6"
-          strokeWidth="2.5"
+          stroke="var(--primary)"
+          strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
           points={points}
@@ -110,9 +108,9 @@ const Dashboard = ({ user, setUser, theme }) => {
             key={i}
             cx={padding + i * stepX}
             cy={height - padding - (d.value / maxVal) * (height - padding * 2)}
-            r="3.5"
-            fill="white"
-            stroke="#14b8a6"
+            r="4"
+            fill={isDark ? '#020617' : '#fff'}
+            stroke="var(--primary)"
             strokeWidth="2"
           />
         ))}
@@ -121,18 +119,18 @@ const Dashboard = ({ user, setUser, theme }) => {
   };
 
   return (
-    <div style={{ background: '#f2f5f8', minHeight: '100vh', width: '100vw', padding: '0', color: '#1e293b', overflowX: 'hidden' }}>
+    <div style={{ background: 'var(--bg-darker)', minHeight: '100vh', width: '100vw', transition: 'background 0.3s ease' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(20px, 5vw, 40px)', paddingBottom: '120px' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
           <div>
-            <h1 style={{ fontSize: '2.2rem', fontWeight: 700, color: '#1e293b', lineHeight: '1.2' }}>
+            <h1 style={{ fontSize: '2.2rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: '1.2' }}>
               Welcome,<br />
               <span style={{ fontWeight: 800 }}>{user.username}</span>
             </h1>
           </div>
-          <button style={{ background: 'none', border: 'none', color: '#1e293b' }}>
+          <button style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
             <Menu size={32} />
           </button>
         </div>
@@ -147,7 +145,7 @@ const Dashboard = ({ user, setUser, theme }) => {
               borderRadius: '32px',
               padding: '30px',
               color: 'white',
-              boxShadow: '0 20px 40px rgba(59, 130, 246, 0.15)',
+              boxShadow: '0 20px 40px rgba(59, 130, 246, 0.2)',
               position: 'relative',
               overflow: 'hidden',
               display: 'flex',
@@ -156,14 +154,14 @@ const Dashboard = ({ user, setUser, theme }) => {
               minHeight: '220px'
             }}
           >
-            <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '180px', height: '180px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%' }} />
+            <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '180px', height: '180px', background: 'rgba(255,255,255,0.15)', borderRadius: '50%' }} />
             <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '8px', fontWeight: 600 }}>Total Balance</p>
             <h2 style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>PKR</span> {(Number(user.balance) || 0).toLocaleString()}
             </h2>
             <div style={{
               display: 'inline-flex',
-              background: 'rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.25)',
               padding: '8px 20px',
               borderRadius: '100px',
               fontSize: '0.9rem',
@@ -178,23 +176,23 @@ const Dashboard = ({ user, setUser, theme }) => {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             {/* Today Profit */}
-            <div style={{ background: 'white', padding: '25px', borderRadius: '28px', boxShadow: '0 10px 25px rgba(0,0,0,0.02)' }}>
-              <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: 600, marginBottom: '10px' }}>Today Profit</p>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#10b981' }}>
+            <div className="glass" style={{ padding: '25px', borderRadius: '28px', border: '1px solid var(--glass-border)' }}>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.95rem', fontWeight: 600, marginBottom: '10px' }}>Today Profit</p>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--accent-green)' }}>
                 $+PKR {stats.todayProfit.toLocaleString()}
               </h3>
             </div>
             {/* Yesterday Profit */}
-            <div style={{ background: 'white', padding: '25px', borderRadius: '28px', boxShadow: '0 10px 25px rgba(0,0,0,0.02)' }}>
-              <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: 600, marginBottom: '10px' }}>Yesterday Profit</p>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#10b981' }}>
+            <div className="glass" style={{ padding: '25px', borderRadius: '28px', border: '1px solid var(--glass-border)' }}>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.95rem', fontWeight: 600, marginBottom: '10px' }}>Yesterday Profit</p>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--accent-green)' }}>
                 $+PKR {stats.yesterdayProfit.toLocaleString()}
               </h3>
             </div>
             {/* Total Profit */}
-            <div style={{ background: 'white', padding: '25px', borderRadius: '28px', boxShadow: '0 10px 25px rgba(0,0,0,0.02)', gridColumn: 'span 2' }}>
-              <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: 600, marginBottom: '10px' }}>Total Profit</p>
-              <h3 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#1e293b' }}>
+            <div className="glass" style={{ padding: '25px', borderRadius: '28px', border: '1px solid var(--glass-border)', gridColumn: 'span 2' }}>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.95rem', fontWeight: 600, marginBottom: '10px' }}>Total Profit</p>
+              <h3 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 ++{stats.totalProfit.toLocaleString()}
               </h3>
             </div>
@@ -202,14 +200,14 @@ const Dashboard = ({ user, setUser, theme }) => {
         </div>
 
         {/* Analytics Section */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '30px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '30px' }}>
           {/* Chart Card */}
-          <div style={{ background: 'white', padding: '30px', borderRadius: '32px', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
+          <div className="glass" style={{ padding: '30px', borderRadius: '32px', border: '1px solid var(--glass-border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-              <h3 style={{ fontWeight: 800, fontSize: '1.2rem' }}>Earnings Over Time</h3>
-              <div style={{ display: 'flex', gap: '8px', background: '#f1f5f9', padding: '6px', borderRadius: '15px' }}>
-                <span style={{ padding: '6px 14px', fontSize: '0.8rem', background: 'white', color: '#1e293b', borderRadius: '12px', fontWeight: 700, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>Daily</span>
-                <span style={{ padding: '6px 14px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Weekly</span>
+              <h3 style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text-main)' }}>Earnings Over Time</h3>
+              <div style={{ display: 'flex', gap: '8px', background: 'var(--surface-light)', padding: '6px', borderRadius: '15px' }}>
+                <span style={{ padding: '6px 14px', fontSize: '0.8rem', background: 'var(--primary)', color: 'white', borderRadius: '12px', fontWeight: 700 }}>Daily</span>
+                <span style={{ padding: '6px 14px', fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: 600 }}>Weekly</span>
               </div>
             </div>
             <div style={{ height: '200px' }}>
@@ -217,16 +215,16 @@ const Dashboard = ({ user, setUser, theme }) => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
               {stats.chartData.map((d, i) => (
-                <span key={i} style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600 }}>{d.label}</span>
+                <span key={i} style={{ color: 'var(--text-dim)', fontSize: '0.75rem', fontWeight: 600 }}>{d.label}</span>
               ))}
             </div>
           </div>
 
           {/* Investment Summary */}
-          <div style={{ background: 'white', padding: '30px', borderRadius: '32px', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
-            <h3 style={{ fontWeight: 800, fontSize: '1.2rem', marginBottom: '30px' }}>Investment Summary</h3>
-            <p style={{ fontSize: '1.1rem', color: '#1e293b', fontWeight: 800, marginBottom: '15px' }}>Active Investment</p>
-            <div style={{ width: '100%', height: '14px', background: '#f1f5f9', borderRadius: '10px', overflow: 'hidden', marginBottom: '25px' }}>
+          <div className="glass" style={{ padding: '30px', borderRadius: '32px', border: '1px solid var(--glass-border)' }}>
+            <h3 style={{ fontWeight: 800, fontSize: '1.2rem', marginBottom: '30px', color: 'var(--text-main)' }}>Investment Summary</h3>
+            <p style={{ fontSize: '1.1rem', color: 'var(--text-main)', fontWeight: 800, marginBottom: '15px' }}>Active Investment</p>
+            <div style={{ width: '100%', height: '14px', background: 'var(--surface-light)', borderRadius: '10px', overflow: 'hidden', marginBottom: '25px' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: user.investedAmount > 0 ? '68%' : '0%' }}
@@ -235,42 +233,45 @@ const Dashboard = ({ user, setUser, theme }) => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <div>
-                <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '6px', fontWeight: 600 }}>Total Deposited</p>
-                <p style={{ fontWeight: 800, fontSize: '1.3rem' }}>$PKR {Number(user.investedAmount).toLocaleString()}</p>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginBottom: '6px', fontWeight: 600 }}>Total Deposited</p>
+                <p style={{ fontWeight: 800, fontSize: '1.3rem', color: 'var(--text-main)' }}>$PKR {Number(user.investedAmount).toLocaleString()}</p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '6px', fontWeight: 600 }}>Total Withdrawn</p>
-                <p style={{ fontWeight: 800, fontSize: '1.3rem' }}>$PKR {(stats.totalProfit - user.balance > 0 ? stats.totalProfit - user.balance : 0).toLocaleString()}</p>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginBottom: '6px', fontWeight: 600 }}>Total Withdrawn</p>
+                <p style={{ fontWeight: 800, fontSize: '1.3rem', color: 'var(--text-main)' }}>$PKR {(stats.totalProfit - user.balance > 0 ? stats.totalProfit - user.balance : 0).toLocaleString()}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Nav */}
-        <div style={{
-          position: 'fixed',
-          bottom: '30px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 'calc(100% - 60px)',
-          maxWidth: '480px',
-          background: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(20px)',
-          padding: '16px',
-          borderRadius: '32px',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '15px',
-          zIndex: 1000,
-          border: '1px solid rgba(255,255,255,0.5)'
-        }}>
-          <button style={{ background: 'none', border: 'none', color: '#1e293b', padding: '10px' }}>
+        {/* Mobile-Only Bottom Nav */}
+        <div
+          className="mobile-only-nav"
+          style={{
+            position: 'fixed',
+            bottom: '30px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'calc(100% - 60px)',
+            maxWidth: '480px',
+            background: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(20px)',
+            padding: '16px',
+            borderRadius: '32px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '15px',
+            zIndex: 1000,
+            border: '1px solid var(--glass-border)'
+          }}
+        >
+          <button style={{ background: 'none', border: 'none', color: 'var(--text-main)', padding: '10px' }}>
             <Menu size={26} />
           </button>
           <button
             onClick={() => window.location.href = '/plans'}
-            style={{ flex: 1, padding: '18px', borderRadius: '20px', fontWeight: 800, fontSize: '1rem', background: '#f1f5f9', color: '#1e293b', border: 'none', cursor: 'pointer' }}
+            style={{ flex: 1, padding: '18px', borderRadius: '20px', fontWeight: 800, fontSize: '1rem', background: 'var(--surface-light)', color: 'var(--text-main)', border: 'none', cursor: 'pointer' }}
           >
             Deposit
           </button>
@@ -286,12 +287,20 @@ const Dashboard = ({ user, setUser, theme }) => {
               color: 'white',
               border: 'none',
               cursor: 'pointer',
-              boxShadow: '0 8px 20px rgba(45, 212, 191, 0.3)'
+              boxShadow: '0 8px 20px rgba(45, 212, 191, 0.4)'
             }}
           >
             Withdraw
           </button>
         </div>
+
+        <style>{`
+          @media (min-width: 769px) {
+            .mobile-only-nav {
+              display: none !important;
+            }
+          }
+        `}</style>
 
       </div>
     </div>
