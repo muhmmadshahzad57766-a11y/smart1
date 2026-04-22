@@ -119,7 +119,7 @@ const Dashboard = ({ user, setUser, theme }) => {
   };
 
   return (
-    <div style={{ background: 'var(--bg-darker)', minHeight: '100vh', width: '100vw', transition: 'background 0.3s ease' }}>
+    <div style={{ background: 'var(--bg-darker)', minHeight: '100vh', width: '100vw', transition: 'all 0.3s ease' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(20px, 5vw, 40px)', paddingBottom: '120px' }}>
 
         {/* Header */}
@@ -130,7 +130,7 @@ const Dashboard = ({ user, setUser, theme }) => {
               <span style={{ fontWeight: 800 }}>{user.username}</span>
             </h1>
           </div>
-          <button style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
+          <button className="mobile-only" style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
             <Menu size={32} />
           </button>
         </div>
@@ -179,21 +179,21 @@ const Dashboard = ({ user, setUser, theme }) => {
             <div className="glass" style={{ padding: '25px', borderRadius: '28px', border: '1px solid var(--glass-border)' }}>
               <p style={{ color: 'var(--text-dim)', fontSize: '0.95rem', fontWeight: 600, marginBottom: '10px' }}>Today Profit</p>
               <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--accent-green)' }}>
-                $+PKR {stats.todayProfit.toLocaleString()}
+                PKR {stats.todayProfit.toLocaleString()}
               </h3>
             </div>
             {/* Yesterday Profit */}
             <div className="glass" style={{ padding: '25px', borderRadius: '28px', border: '1px solid var(--glass-border)' }}>
               <p style={{ color: 'var(--text-dim)', fontSize: '0.95rem', fontWeight: 600, marginBottom: '10px' }}>Yesterday Profit</p>
               <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--accent-green)' }}>
-                $+PKR {stats.yesterdayProfit.toLocaleString()}
+                PKR {stats.yesterdayProfit.toLocaleString()}
               </h3>
             </div>
             {/* Total Profit */}
             <div className="glass" style={{ padding: '25px', borderRadius: '28px', border: '1px solid var(--glass-border)', gridColumn: 'span 2' }}>
               <p style={{ color: 'var(--text-dim)', fontSize: '0.95rem', fontWeight: 600, marginBottom: '10px' }}>Total Profit</p>
               <h3 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                ++{stats.totalProfit.toLocaleString()}
+                PKR {stats.totalProfit.toLocaleString()}
               </h3>
             </div>
           </div>
@@ -234,11 +234,11 @@ const Dashboard = ({ user, setUser, theme }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <div>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginBottom: '6px', fontWeight: 600 }}>Total Deposited</p>
-                <p style={{ fontWeight: 800, fontSize: '1.3rem', color: 'var(--text-main)' }}>$PKR {Number(user.investedAmount).toLocaleString()}</p>
+                <p style={{ fontWeight: 800, fontSize: '1.3rem', color: 'var(--text-main)' }}>PKR {Number(user.investedAmount).toLocaleString()}</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginBottom: '6px', fontWeight: 600 }}>Total Withdrawn</p>
-                <p style={{ fontWeight: 800, fontSize: '1.3rem', color: 'var(--text-main)' }}>$PKR {(stats.totalProfit - user.balance > 0 ? stats.totalProfit - user.balance : 0).toLocaleString()}</p>
+                <p style={{ fontWeight: 800, fontSize: '1.3rem', color: 'var(--text-main)' }}>PKR {(stats.totalProfit - user.balance > 0 ? stats.totalProfit - user.balance : 0).toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -246,7 +246,7 @@ const Dashboard = ({ user, setUser, theme }) => {
 
         {/* Mobile-Only Bottom Nav */}
         <div
-          className="mobile-only-nav"
+          className="mobile-only"
           style={{
             position: 'fixed',
             bottom: '30px',
@@ -296,7 +296,7 @@ const Dashboard = ({ user, setUser, theme }) => {
 
         <style>{`
           @media (min-width: 769px) {
-            .mobile-only-nav {
+            .mobile-only {
               display: none !important;
             }
           }
