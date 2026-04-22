@@ -176,7 +176,7 @@ export const getSettings = async () => {
 export const updateSettings = async (newSettings) => {
   const { data: current } = await supabase.from('settings').select('value').eq('id', 1).maybeSingle();
   const updatedValue = { ...(current?.value || {}), ...newSettings };
-  const { data } = await supabase.from('settings').update({ value: updatedValue }).eq('id', 1).select().single();
+  const { data } = await supabase.from('settings').upsert({ id: 1, value: updatedValue }).select().maybeSingle();
   return data;
 };
 

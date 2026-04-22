@@ -808,10 +808,13 @@ const AdminDashboard = ({ theme }) => {
                         className="glass"
                         style={{ padding: '8px 16px', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 700 }}
                         onClick={() => {
-                          const s = { ...settings };
-                          if (!Array.isArray(s.adminWallets)) s.adminWallets = [];
-                          s.adminWallets.push({ id: Date.now().toString(), title: 'New Category', accounts: [] });
-                          setSettings(s);
+                          setSettings(prev => {
+                            const wallets = Array.isArray(prev.adminWallets) ? [...prev.adminWallets] : [];
+                            return {
+                              ...prev,
+                              adminWallets: [...wallets, { id: Date.now().toString(), title: 'New Category', accounts: [] }]
+                            };
+                          });
                         }}
                       >
                         + Add Category
@@ -826,9 +829,12 @@ const AdminDashboard = ({ theme }) => {
                               className="glass"
                               value={cat.title || ''}
                               onChange={(e) => {
-                                const s = { ...settings };
-                                s.adminWallets[catIndex].title = e.target.value;
-                                setSettings(s);
+                                const newTitle = e.target.value;
+                                setSettings(prev => {
+                                  const newWallets = [...prev.adminWallets];
+                                  newWallets[catIndex] = { ...newWallets[catIndex], title: newTitle };
+                                  return { ...prev, adminWallets: newWallets };
+                                });
                               }}
                               placeholder="Category Title (e.g. SadaPay)"
                               style={{
@@ -847,9 +853,13 @@ const AdminDashboard = ({ theme }) => {
                                 className="glass"
                                 style={{ padding: '4px 10px', fontSize: '0.7rem', color: 'var(--accent-green)' }}
                                 onClick={() => {
-                                  const s = { ...settings };
-                                  s.adminWallets[catIndex].accounts.push({ number: '', name: '', id: Date.now() });
-                                  setSettings(s);
+                                  setSettings(prev => {
+                                    const newWallets = [...prev.adminWallets];
+                                    const newAccounts = [...(newWallets[catIndex].accounts || [])];
+                                    newAccounts.push({ number: '', name: '', id: Date.now() });
+                                    newWallets[catIndex] = { ...newWallets[catIndex], accounts: newAccounts };
+                                    return { ...prev, adminWallets: newWallets };
+                                  });
                                 }}
                               >
                                 + Add Account
@@ -857,9 +867,10 @@ const AdminDashboard = ({ theme }) => {
                               <button
                                 onClick={() => {
                                   if (confirm(`Delete the entire "${cat.title}" category?`)) {
-                                    const s = { ...settings };
-                                    s.adminWallets.splice(catIndex, 1);
-                                    setSettings(s);
+                                    setSettings(prev => {
+                                      const newWallets = prev.adminWallets.filter((_, i) => i !== catIndex);
+                                      return { ...prev, adminWallets: newWallets };
+                                    });
                                   }
                                 }}
                                 style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer' }}
@@ -878,9 +889,14 @@ const AdminDashboard = ({ theme }) => {
                                     placeholder="Account Number"
                                     value={acc.number || ''}
                                     onChange={(e) => {
-                                      const s = { ...settings };
-                                      s.adminWallets[catIndex].accounts[accIndex].number = e.target.value;
-                                      setSettings(s);
+                                      const val = e.target.value;
+                                      setSettings(prev => {
+                                        const newWallets = [...prev.adminWallets];
+                                        const newAccounts = [...newWallets[catIndex].accounts];
+                                        newAccounts[accIndex] = { ...newAccounts[accIndex], number: val };
+                                        newWallets[catIndex] = { ...newWallets[catIndex], accounts: newAccounts };
+                                        return { ...prev, adminWallets: newWallets };
+                                      });
                                     }}
                                     style={{ width: '100%', padding: '8px', color: 'var(--text-main)', fontSize: '0.9rem' }}
                                   />
@@ -889,18 +905,26 @@ const AdminDashboard = ({ theme }) => {
                                     placeholder="Account Title"
                                     value={acc.name || ''}
                                     onChange={(e) => {
-                                      const s = { ...settings };
-                                      s.adminWallets[catIndex].accounts[accIndex].name = e.target.value;
-                                      setSettings(s);
+                                      const val = e.target.value;
+                                      setSettings(prev => {
+                                        const newWallets = [...prev.adminWallets];
+                                        const newAccounts = [...newWallets[catIndex].accounts];
+                                        newAccounts[accIndex] = { ...newAccounts[accIndex], name: val };
+                                        newWallets[catIndex] = { ...newWallets[catIndex], accounts: newAccounts };
+                                        return { ...prev, adminWallets: newWallets };
+                                      });
                                     }}
                                     style={{ width: '100%', padding: '8px', color: 'var(--text-dim)', fontSize: '0.8rem' }}
                                   />
                                 </div>
                                 <button
                                   onClick={() => {
-                                    const s = { ...settings };
-                                    s.adminWallets[catIndex].accounts.splice(accIndex, 1);
-                                    setSettings(s);
+                                    setSettings(prev => {
+                                      const newWallets = [...prev.adminWallets];
+                                      const newAccounts = newWallets[catIndex].accounts.filter((_, i) => i !== accIndex);
+                                      newWallets[catIndex] = { ...newWallets[catIndex], accounts: newAccounts };
+                                      return { ...prev, adminWallets: newWallets };
+                                    });
                                   }}
                                   style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', paddingTop: '8px' }}
                                 >
