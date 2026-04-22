@@ -49,7 +49,7 @@ export const uploadScreenshot = async (file) => {
 };
 
 export const login = async (username, password) => {
-  const { data, error } = await supabase.from('users').select('*').eq('username', username).eq('password', password).single();
+  const { data, error } = await supabase.from('users').select('*').eq('username', username).eq('password', password).maybeSingle();
   if (error || !data) return null;
   localStorage.setItem('current_user_id', data.id);
 
