@@ -96,7 +96,7 @@ const Plans = ({ user, setUser, theme }) => {
     }
 
     await addInvestmentRequest(user.id, {
-      planId: 'custom',
+      planId: null,
       planName: `Investment: ${amount}`,
       ...formData,
       screenshot: screenshotUrl,

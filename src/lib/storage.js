@@ -291,43 +291,46 @@ export const fetchInvestmentRequests = async () => {
 };
 
 export const handleInvestmentRequest = async (requestId, status) => {
-  const { data: request } = await supabase.from('investment_requests').update({ status }).eq('id', requestId).select().single();
+  const { data: request } = await supabase.from('investment_requests').update({ status }).eq('id', requestId).select().maybeSingle();
 
   if (status === 'approved' && request) {
-    // Before approving a new plan, calculate rewards for the old one to avoid loss
+    // Before approving a new investment, calculate rewards for the old one to avoid loss
     await calculateRewards(request.user_id);
 
-    const { data: plan } = await supabase.from('plans').select('*').eq('id', request.plan_id).single();
-    if (plan) {
-      // Reward referrer logic
-      const { data: user } = await supabase.from('users').select('*').eq('id', request.user_id).single();
-      let investedAm = plan.price + (user.invested_amount || 0);
+    const { data: user } = await supabase.from('users').select('*').eq('id', request.user_id).maybeSingle();
+    if (!user) return {};
 
-      if (user.referred_by) {
-        const { data: settings } = await supabase.from('settings').select('referral_reward_percent').eq('id', 1).single();
-        const rewardObj = (plan.price * (settings?.referral_reward_percent || 10)) / 100;
-        const { data: referrer } = await supabase.from('users').select('*').eq('id', user.referred_by).single();
+    const settings = await getSettings();
+    const amount = Number(request.amount_sent || 0);
+    let investedAm = amount + (user.invested_amount || 0);
+
+    // Reward calculation based on global percentage since there's no fixed plan
+    const dailyPercent = Number(settings.dailyProfitPercent || 2);
+    const firstApproveReward = (amount * dailyPercent) / 100;
+
+    // Referral logic
+    if (user.referred_by) {
+      const rewardObj = (amount * (settings?.referralRewardPercent || 10)) / 100;
+      const { data: referrer } = await supabase.from('users').select('*').eq('id', user.referred_by).maybeSingle();
+      if (referrer) {
         await supabase.from('users').update({
           balance: Number(referrer.balance || 0) + rewardObj,
           referral_earnings: Number(referrer.referral_earnings || 0) + rewardObj
         }).eq('id', referrer.id);
       }
-
-      const firstApproveReward = Number(plan.daily_reward || 0);
-
-      await supabase.from('users').update({
-        current_plan_id: plan.id,
-        plan_start_time: new Date().toISOString(),
-        invested_amount: investedAm,
-        balance: Number(user.balance || 0) + firstApproveReward
-      }).eq('id', request.user_id);
-
-      await supabase.from('rewards').insert([{
-        user_id: request.user_id,
-        amount: firstApproveReward,
-        timestamp: new Date().toISOString()
-      }]);
     }
+
+    await supabase.from('users').update({
+      plan_start_time: new Date().toISOString(),
+      invested_amount: investedAm,
+      balance: Number(user.balance || 0) + firstApproveReward
+    }).eq('id', request.user_id);
+
+    await supabase.from('rewards').insert([{
+      user_id: request.user_id,
+      amount: firstApproveReward,
+      timestamp: new Date().toISOString()
+    }]);
   }
   return {};
 };
