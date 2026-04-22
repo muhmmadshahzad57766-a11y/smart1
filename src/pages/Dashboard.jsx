@@ -7,7 +7,8 @@ import {
 } from '../lib/storage';
 import { motion } from 'framer-motion';
 import {
-  Menu
+  Menu,
+  X
 } from 'lucide-react';
 
 const Dashboard = ({ user, setUser, theme }) => {
@@ -16,6 +17,7 @@ const Dashboard = ({ user, setUser, theme }) => {
   const [userRewards, setUserRewards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('daily');
+  const [showMessage, setShowMessage] = useState(true);
 
   useEffect(() => {
     const init = async () => {
@@ -150,6 +152,66 @@ const Dashboard = ({ user, setUser, theme }) => {
             <Menu size={32} />
           </button>
         </div>
+
+        {/* Welcome Message */}
+        {showMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass"
+            style={{
+              padding: '20px',
+              marginBottom: '30px',
+              position: 'relative',
+              border: '1px solid var(--glass-border)',
+              background: 'var(--surface-light)',
+              borderRadius: '24px',
+              overflow: 'hidden'
+            }}
+          >
+            <button
+              onClick={() => setShowMessage(false)}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'rgba(0,0,0,0.1)',
+                border: 'none',
+                color: 'var(--text-main)',
+                borderRadius: '50%',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            <div style={{ paddingRight: '20px' }}>
+              <p dir="rtl" style={{
+                fontSize: '1.1rem',
+                marginBottom: '15px',
+                color: 'var(--text-main)',
+                fontWeight: 600,
+                textAlign: 'right',
+                lineHeight: '1.6',
+                fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+              }}>
+                السلام علیکم،<br />
+                ہم ایک منظم اور تجربہ کار انویسٹمنٹ سسٹم کے تحت کام کرتے ہیں جہاں سرمایہ کاروں کی رقم کو مختلف بینکنگ چینلز، کاروباری مواقع اور قابلِ اعتماد پارٹنرز کے ساتھ لگایا جاتا ہے۔ ہمارا مقصد محفوظ طریقے سے سرمایہ کو بڑھانا اور سرمایہ کاروں کو مستقل بنیادوں پر منافع فراہم کرنا ہے۔
+              </p>
+              <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, var(--glass-border), transparent)', margin: '15px 0' }} />
+              <p style={{ textAlign: 'left', fontSize: '0.9rem', color: 'var(--text-dim)', lineHeight: '1.5' }}>
+                Hello,<br />
+                We operate under a structured and experienced investment system where investors' money is invested through various banking channels, business opportunities and trusted partners. Our goal is to grow capital safely and provide investors with consistent returns.
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* Main Section: Cards Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '20px', marginBottom: '30px' }}>
