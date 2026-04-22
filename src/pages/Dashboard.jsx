@@ -172,7 +172,7 @@ const Dashboard = ({ user, setUser, theme }) => {
             <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '180px', height: '180px', background: 'rgba(255,255,255,0.15)', borderRadius: '50%' }} />
             <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '8px', fontWeight: 600 }}>Total Balance</p>
             <h2 style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>PKR</span> {(Number(user.balance) || 0).toLocaleString()}
+              <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>PKR</span> {((Number(user.balance) || 0) + (Number(user.investedAmount) || 0)).toLocaleString()}
             </h2>
             <div style={{
               display: 'inline-flex',
