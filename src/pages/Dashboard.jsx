@@ -8,7 +8,13 @@ import {
 import { motion } from 'framer-motion';
 import {
   Menu,
-  X
+  X,
+  Copy,
+  Share2,
+  Users,
+  Wallet as WalletIcon,
+  DollarSign,
+  TrendingUp
 } from 'lucide-react';
 
 const Dashboard = ({ user, setUser, theme }) => {
@@ -18,6 +24,15 @@ const Dashboard = ({ user, setUser, theme }) => {
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('daily');
   const [showMessage, setShowMessage] = useState(true);
+  const [copyFeedback, setCopyFeedback] = useState({ code: false, link: false });
+
+  const copyToClipboard = (text, type) => {
+    navigator.clipboard.writeText(text);
+    setCopyFeedback({ ...copyFeedback, [type]: true });
+    setTimeout(() => setCopyFeedback({ ...copyFeedback, [type]: false }), 2000);
+  };
+
+  const referralLink = `${window.location.origin}/login?ref=${user.referralCode}`;
 
   useEffect(() => {
     const init = async () => {
@@ -284,6 +299,91 @@ const Dashboard = ({ user, setUser, theme }) => {
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginBottom: '6px', fontWeight: 600 }}>Total Withdrawn</p>
                 <p style={{ fontWeight: 800, fontSize: '1.3rem', color: 'var(--text-main)' }}>PKR {(stats.totalProfit - user.balance > 0 ? stats.totalProfit - user.balance : 0).toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Referral Program Section */}
+        <div className="glass" style={{
+          marginTop: '40px',
+          padding: 'clamp(20px, 5vw, 40px)',
+          borderRadius: '32px',
+          background: 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(240, 147, 251, 0.05) 100%)',
+          border: '1px solid var(--glass-border)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{ position: 'absolute', top: '-20px', right: '-20px', opacity: 0.05 }}>
+            <Users size={120} />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '30px' }}>
+            <div style={{ flex: '1', minWidth: '300px' }}>
+              <div style={{ display: 'inline-flex', padding: '10px', background: 'rgba(79, 172, 254, 0.1)', borderRadius: '12px', color: 'var(--primary)', marginBottom: '15px' }}>
+                <Share2 size={24} />
+              </div>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '10px' }}>Referral <span className="gradient-text">Program</span></h2>
+              <p style={{ color: 'var(--text-dim)', marginBottom: '25px', lineHeight: 1.6, maxWidth: '500px' }}>
+                Invite your friends and earn rewards! You get a <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{settings?.referralRewardPercent || 10}% bonus</span> on every investment they make.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '15px' }}>
+                <div className="glass" style={{ padding: '20px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)' }}>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '5px' }}>Total Referrals</p>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Users size={18} color="var(--primary)" /> {user.referralCount || 0}
+                  </h3>
+                </div>
+                <div className="glass" style={{ padding: '20px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)' }}>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '5px' }}>Referral Earnings</p>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <WalletIcon size={18} /> PKR {(Number(user.referralEarnings) || 0).toLocaleString()}
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Your Referral Code</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div className="glass" style={{ flex: 1, padding: '12px 20px', fontWeight: 700, letterSpacing: '2px', color: 'var(--primary)', textAlign: 'center', fontSize: '1.1rem', background: 'rgba(255,255,255,0.03)' }}>
+                    {user.referralCode}
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(user.referralCode, 'code')}
+                    className="glass"
+                    style={{ padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: copyFeedback.code ? 'var(--accent-green)' : 'var(--text-main)', cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    {copyFeedback.code ? <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>Copied!</span> : <Copy size={20} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Referral Link</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div className="glass" style={{
+                    flex: 1,
+                    padding: '12px 20px',
+                    fontSize: '0.85rem',
+                    color: 'var(--text-dim)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    background: 'rgba(255,255,255,0.03)'
+                  }}>
+                    {referralLink}
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(referralLink, 'link')}
+                    className="glass"
+                    style={{ padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: copyFeedback.link ? 'var(--accent-green)' : 'var(--text-main)', cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    {copyFeedback.link ? <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>Copied!</span> : <Copy size={20} />}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
