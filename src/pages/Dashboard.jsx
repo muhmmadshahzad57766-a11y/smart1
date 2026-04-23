@@ -435,6 +435,54 @@ const Dashboard = ({ user, setUser, theme }) => {
           </div>
         </div>
 
+        {/* Bottom Quick Actions */}
+        <div style={{
+          marginTop: '40px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+          gap: '15px'
+        }}>
+          <button
+            onClick={() => navigate('/plans')}
+            className="gradient-btn"
+            style={{
+              padding: '24px',
+              borderRadius: '28px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px',
+              fontSize: '1.2rem',
+              cursor: 'pointer'
+            }}
+          >
+            <TrendingUp size={32} />
+            Deposit
+          </button>
+          <button
+            onClick={() => navigate('/withdraw')}
+            className="glass"
+            style={{
+              padding: '24px',
+              borderRadius: '28px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px',
+              fontSize: '1.2rem',
+              background: 'var(--surface)',
+              border: '2px solid var(--glass-border)',
+              cursor: 'pointer',
+              color: 'var(--text-main)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: 'var(--shadow-md)'
+            }}
+          >
+            <WalletIcon size={32} />
+            Withdraw
+          </button>
+        </div>
+
 
       </div>
     </div>
