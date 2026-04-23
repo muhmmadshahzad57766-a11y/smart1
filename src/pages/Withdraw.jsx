@@ -8,6 +8,8 @@ const Withdraw = ({ user, setUser, theme }) => {
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('JazzCash');
   const [accountNumber, setAccountNumber] = useState('');
+  const [accountTitle, setAccountTitle] = useState('');
+  const [accountName, setAccountName] = useState('');
   const [loading, setLoading] = useState(false);
   const [withdrawals, setWithdrawals] = useState([]);
   const [fetching, setFetching] = useState(true);
@@ -43,7 +45,7 @@ const Withdraw = ({ user, setUser, theme }) => {
 
     setLoading(true);
 
-    await submitWithdrawal(user.id, withdrawAmount, method, accountNumber);
+    await submitWithdrawal(user.id, withdrawAmount, method, accountNumber, accountTitle, accountName);
 
     // Refresh user balance and withdrawal history
     const [updatedUser, newHistory] = await Promise.all([
@@ -56,6 +58,8 @@ const Withdraw = ({ user, setUser, theme }) => {
     setLoading(false);
     setAmount('');
     setAccountNumber('');
+    setAccountTitle('');
+    setAccountName('');
     alert('Withdrawal request submitted successfully!');
   };
 
@@ -115,6 +119,32 @@ const Withdraw = ({ user, setUser, theme }) => {
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value)}
                 placeholder="e.g. 0300 1234567"
+                required
+                style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }}
+              />
+            </div>
+
+            <div className="input-group">
+              <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>Account Title</label>
+              <input
+                className="glass"
+                type="text"
+                value={accountTitle}
+                onChange={(e) => setAccountTitle(e.target.value)}
+                placeholder="Name of account holder"
+                required
+                style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }}
+              />
+            </div>
+
+            <div className="input-group">
+              <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>Account Name</label>
+              <input
+                className="glass"
+                type="text"
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                placeholder="Bank or Wallet Name (e.g. JazzCash)"
                 required
                 style={{ width: '100%', padding: '12px', color: 'var(--text-main)' }}
               />
