@@ -5,6 +5,7 @@ import {
   getSettings,
   calculateRewards
 } from '../lib/storage';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Menu,
@@ -25,6 +26,7 @@ const Dashboard = ({ user, setUser, theme }) => {
   const [timeframe, setTimeframe] = useState('daily');
   const [showMessage, setShowMessage] = useState(true);
   const [copyFeedback, setCopyFeedback] = useState({ code: false, link: false });
+  const navigate = useNavigate();
 
   const copyToClipboard = (text, type) => {
     navigator.clipboard.writeText(text);
@@ -186,9 +188,53 @@ const Dashboard = ({ user, setUser, theme }) => {
           >
             <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '180px', height: '180px', background: 'rgba(255,255,255,0.15)', borderRadius: '50%' }} />
             <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '8px', fontWeight: 600 }}>Total Balance</p>
-            <h2 style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h2 style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>PKR</span> {((Number(user.balance) || 0) + (Number(user.investedAmount) || 0)).toLocaleString()}
             </h2>
+
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '25px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => navigate('/plans')}
+                className="glass"
+                style={{
+                  padding: '12px 24px',
+                  background: 'rgba(255,255,255,0.2)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  color: 'white',
+                  borderRadius: '16px',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <TrendingUp size={18} /> Deposit
+              </button>
+              <button
+                onClick={() => navigate('/withdraw')}
+                className="glass"
+                style={{
+                  padding: '12px 24px',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: 'white',
+                  borderRadius: '16px',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <WalletIcon size={18} /> Withdraw
+              </button>
+            </div>
+
             <div style={{
               display: 'inline-flex',
               background: 'rgba(255,255,255,0.25)',
